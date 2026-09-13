@@ -17,6 +17,7 @@
     }
     .container { width: 100%; max-width: 480px; }
 
+    /* HEADER */
     .app-header {
         background: white;
         border-radius: 14px;
@@ -39,6 +40,7 @@
     .app-header .title { font-size: 13px; color: #888; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
     .app-header .room-name { font-size: 20px; color: #1a1a2e; font-weight: 800; margin-top: 2px; }
 
+    /* MAIL CARD */
     .mail-card {
         background: white;
         border-radius: 14px;
@@ -112,6 +114,7 @@
         margin-top: 10px;
     }
 
+    /* COPY BUTTON */
     .copy-btn {
         width: 100%;
         background: linear-gradient(135deg, #667eea, #764ba2);
@@ -135,6 +138,7 @@
     .copy-btn:active:not(:disabled) { transform: translateY(0); }
     .copy-btn:disabled { background: #d1d5db; box-shadow: none; cursor: not-allowed; color: #6b7280; }
 
+    /* STATS */
     .stats-row {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -155,6 +159,7 @@
     .stat-box.dup .num { color: #ef4444; }
     .stat-box.other .num { color: #f59e0b; }
 
+    /* ADMIN */
     .toggle-admin {
         width: 100%;
         background: rgba(255,255,255,0.85);
@@ -217,6 +222,7 @@
     .btn-file { background: #3b82f6; }
     .btn-file:hover { background: #2563eb; }
 
+    /* HOME */
     .home-card {
         background: white;
         border-radius: 14px;
@@ -266,6 +272,7 @@
 
     .hidden { display: none !important; }
 
+    /* TOAST */
     .toast {
         position: fixed;
         top: 24px; left: 50%;
@@ -289,6 +296,7 @@
     .toast.success { background: #10b981; }
     .toast.error { background: #ef4444; }
 
+    /* SPINNER */
     .spinner {
         display: inline-block;
         width: 16px; height: 16px;
@@ -301,7 +309,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Modal copy thủ công */
+    /* MODAL */
     .modal-overlay {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
@@ -322,7 +330,7 @@
         text-align: center;
     }
     .modal h3 { font-size: 17px; color: #1a1a2e; margin-bottom: 8px; }
-    .modal p { font-size: 13px; color: #666; margin-bottom: 16px; }
+    .modal p { font-size: 13px; color: #666; margin-bottom: 16px; line-height: 1.5; }
     .modal input {
         width: 100%;
         padding: 14px;
@@ -335,6 +343,7 @@
         text-align: center;
         margin-bottom: 12px;
         background: #f8f9ff;
+        outline: none;
     }
     .modal button {
         width: 100%;
@@ -346,13 +355,17 @@
         font-weight: 700;
         font-size: 14px;
         cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 6px;
     }
+    .modal button:active { transform: scale(0.98); }
 </style>
 </head>
 <body>
 
 <div class="container">
 
+    <!-- HOME VIEW -->
     <div id="homeView" class="home-card hidden">
         <div class="logo-big">📬</div>
         <h1>Mail Manager</h1>
@@ -361,6 +374,7 @@
         <button class="enter-btn" onclick="goToRoom()">VÀO PHÒNG →</button>
     </div>
 
+    <!-- MAIN VIEW -->
     <div id="mainView" class="hidden">
 
         <div class="app-header">
@@ -445,6 +459,9 @@
     let stats = { added: 0, duplicate: 0, other: 0 };
     let copying = false;
 
+    // ============================================================
+    // TOAST
+    // ============================================================
     function showToast(msg, type) {
         const t = document.getElementById("toast");
         t.className = "toast show" + (type ? " " + type : "");
@@ -453,6 +470,9 @@
         t._tm = setTimeout(() => t.className = "toast", 2500);
     }
 
+    // ============================================================
+    // ĐIỀU HƯỚNG
+    // ============================================================
     function getRoom() {
         return window.location.hash.replace("#", "").trim();
     }
@@ -482,6 +502,9 @@
         init();
     }
 
+    // ============================================================
+    // LOAD ROOM
+    // ============================================================
     function loadRoom(room) {
         db.ref("rooms/" + room + "/accounts").on("value", (snap) => {
             currentAccounts = snap.val() || [];
@@ -499,7 +522,7 @@
             el.className = "mail-text";
             el.innerText = currentAccounts[0];
             btn.disabled = false;
-            hint.innerText = "Bấm COPY để nhận mail. Nếu nhiều người cùng bấm, mỗi người sẽ nhận mail khác nhau.";
+            hint.innerText = "Chỉ copy phần email, không có mật khẩu.";
         } else {
             el.className = "mail-text empty";
             el.innerText = "Chưa có mail nào trong phòng";
@@ -508,6 +531,9 @@
         }
     }
 
+    // ============================================================
+    // ADD MAIL
+    // ============================================================
     function addMails() {
         const raw = document.getElementById("mailInput").value;
         const lines = raw.split("\n").map(s => s.trim()).filter(s => s.length > 0);
@@ -557,6 +583,9 @@
         document.getElementById("statOther").innerText = stats.other || 0;
     }
 
+    // ============================================================
+    // CLEAR ALL
+    // ============================================================
     function clearAll() {
         if (currentAccounts.length === 0) { showToast("Danh sách đang trống"); return; }
         if (!confirm("Xóa tất cả " + currentAccounts.length + " mail trong phòng này?\nHành động không thể hoàn tác!")) return;
@@ -567,6 +596,9 @@
         });
     }
 
+    // ============================================================
+    // LOAD FILE
+    // ============================================================
     function loadFile(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -580,92 +612,127 @@
     }
 
     // ============================================================
-    // COPY MAIL - DÙNG FIREBASE TRANSACTION (ATOMIC)
+    // COPY MAIL - Copy chỉ email (bỏ pass), dùng transaction
     // ============================================================
     function copyMail() {
         if (copying) return;
-        if (currentAccounts.length === 0) { showToast("Hết mail rồi!", "error"); return; }
+        if (currentAccounts.length === 0) {
+            showToast("Hết mail rồi!", "error");
+            return;
+        }
+
+        // mail đầy đủ (để xóa khỏi Firebase) và mail rút gọn (để copy)
+        const mail = currentAccounts[0];
+        const mailToCopy = mail.split("|")[0].trim();
 
         copying = true;
         const btn = document.getElementById("copyBtn");
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner" style="border-color: rgba(255,255,255,0.3); border-top-color: white;"></span> ĐANG LẤY MAIL...';
 
-        const ref = db.ref("rooms/" + currentRoom + "/accounts");
-        let claimedMail = null;
-
-        // Transaction: đọc list hiện tại, lấy phần tử đầu, trả về list đã bỏ phần tử đầu
-        // Firebase sẽ tự động retry nếu data bị thay đổi bởi máy khác giữa chừng
-        ref.transaction((list) => {
-            if (!list || list.length === 0) {
-                return; // abort - không có mail
+        // Copy NGAY trong cùng user gesture để Safari/iOS cho phép
+        const doCopy = () => {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(mailToCopy);
             }
-            claimedMail = list[0];
-            return list.slice(1); // xóa mail đầu tiên
-        }, (error, committed, snapshot) => {
-            btn.disabled = false;
-            btn.innerHTML = '📋 COPY MAIL';
-            copying = false;
+            return new Promise((resolve, reject) => {
+                const ta = document.createElement("textarea");
+                ta.value = mailToCopy;
+                ta.setAttribute("readonly", "");
+                ta.style.position = "fixed";
+                ta.style.top = "-9999px";
+                ta.style.opacity = "0";
+                document.body.appendChild(ta);
+                ta.select();
+                ta.setSelectionRange(0, 99999);
+                try {
+                    document.execCommand("copy");
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                }
+                document.body.removeChild(ta);
+            });
+        };
 
-            if (error) {
-                showToast("Lỗi: " + error.message, "error");
-                return;
-            }
-
-            if (!committed || !claimedMail) {
-                showToast("Hết mail rồi!", "error");
-                return;
-            }
-
-            // Copy mail đã claim được
-            copyToClipboard(claimedMail)
-                .then(() => {
-                    showToast("✅ Đã copy: " + claimedMail, "success");
-                })
-                .catch(() => {
-                    // Clipboard fail → hiện modal cho user copy thủ công
-                    showManualCopyModal(claimedMail);
+        doCopy()
+            .then(() => {
+                showToast("✅ Đã copy: " + mailToCopy, "success");
+                // Xóa mail đầy đủ khỏi Firebase (dùng transaction để chống trùng)
+                return db.ref("rooms/" + currentRoom + "/accounts").transaction((list) => {
+                    if (!list || list.length === 0) return list;
+                    const idx = list.indexOf(mail);
+                    if (idx === -1) return list; // mail đã bị máy khác lấy trước
+                    list.splice(idx, 1);
+                    return list;
                 });
-        });
+            })
+            .then(() => {
+                copying = false;
+                btn.disabled = false;
+            })
+            .catch((err) => {
+                copying = false;
+                btn.disabled = false;
+                if (err && err.name === "NotAllowedError") {
+                    showManualCopyModal(mailToCopy);
+                } else {
+                    showToast("Lỗi: " + err.message, "error");
+                }
+            });
     }
 
-    function copyToClipboard(text) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            return navigator.clipboard.writeText(text);
-        }
-        return new Promise((resolve, reject) => {
-            const ta = document.createElement("textarea");
-            ta.value = text;
-            ta.style.position = "fixed";
-            ta.style.opacity = "0";
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand("copy"); resolve(); }
-            catch (err) { reject(err); }
-            document.body.removeChild(ta);
-        });
-    }
-
+    // ============================================================
+    // MODAL COPY THỦ CÔNG (fallback cho iOS bị chặn)
+    // ============================================================
     function showManualCopyModal(mail) {
         const overlay = document.createElement("div");
         overlay.className = "modal-overlay";
         overlay.innerHTML = `
             <div class="modal">
                 <h3>📋 Mail của bạn</h3>
-                <p>Trình duyệt không cho tự động copy. Hãy bấm vào ô bên dưới và nhấn Ctrl+C (hoặc giữ để chọn):</p>
-                <input type="text" value="${mail.replace(/"/g, '&quot;')}" readonly onclick="this.select()">
-                <button onclick="this.parentElement.parentElement.remove()">ĐÓNG</button>
+                <p>Bấm nút <b>COPY</b> bên dưới hoặc bấm giữ vào ô để tự sao chép:</p>
+                <input type="text" id="modalMailInput" value="${mail.replace(/"/g, '&quot;')}" readonly>
+                <button id="modalCopyBtn">📋 COPY</button>
+                <button id="modalCloseBtn" style="background:#e5e7eb; color:#333;">ĐÓNG</button>
             </div>
         `;
         document.body.appendChild(overlay);
-        // Tự động select
-        setTimeout(() => {
-            const inp = overlay.querySelector("input");
-            inp.focus();
-            inp.select();
-        }, 100);
+
+        const input = overlay.querySelector("#modalMailInput");
+        const copyBtn = overlay.querySelector("#modalCopyBtn");
+        const closeBtn = overlay.querySelector("#modalCloseBtn");
+
+        // Focus + select sẵn để Ctrl+C / Cmd+C là copy được ngay
+        setTimeout(() => { input.focus(); input.select(); }, 100);
+
+        copyBtn.onclick = () => {
+            input.focus();
+            input.select();
+            input.setSelectionRange(0, 99999);
+            try {
+                const ok = document.execCommand("copy");
+                if (ok) {
+                    copyBtn.innerText = "✅ ĐÃ COPY!";
+                    copyBtn.style.background = "#10b981";
+                    setTimeout(() => {
+                        copyBtn.innerText = "📋 COPY";
+                        copyBtn.style.background = "";
+                    }, 1500);
+                } else {
+                    copyBtn.innerText = "⚠️ Bấm giữ để chọn";
+                }
+            } catch (err) {
+                copyBtn.innerText = "⚠️ Bấm giữ để chọn";
+            }
+        };
+
+        closeBtn.onclick = () => overlay.remove();
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
     }
 
+    // ============================================================
+    // TOGGLE ADMIN
+    // ============================================================
     function toggleAdmin() {
         const panel = document.getElementById("adminPanel");
         const btn = document.getElementById("toggleAdminBtn");
