@@ -17,7 +17,6 @@
     }
     .container { width: 100%; max-width: 480px; }
 
-    /* ========== HEADER ========== */
     .app-header {
         background: white;
         border-radius: 14px;
@@ -40,7 +39,6 @@
     .app-header .title { font-size: 13px; color: #888; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
     .app-header .room-name { font-size: 20px; color: #1a1a2e; font-weight: 800; margin-top: 2px; }
 
-    /* ========== CARD MAIL HIỆN TẠI ========== */
     .mail-card {
         background: white;
         border-radius: 14px;
@@ -114,7 +112,6 @@
         margin-top: 10px;
     }
 
-    /* ========== NÚT COPY ========== */
     .copy-btn {
         width: 100%;
         background: linear-gradient(135deg, #667eea, #764ba2);
@@ -136,14 +133,8 @@
     }
     .copy-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(102,126,234,0.5); }
     .copy-btn:active:not(:disabled) { transform: translateY(0); }
-    .copy-btn:disabled {
-        background: #d1d5db;
-        box-shadow: none;
-        cursor: not-allowed;
-        color: #6b7280;
-    }
+    .copy-btn:disabled { background: #d1d5db; box-shadow: none; cursor: not-allowed; color: #6b7280; }
 
-    /* ========== STATS ========== */
     .stats-row {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -164,7 +155,6 @@
     .stat-box.dup .num { color: #ef4444; }
     .stat-box.other .num { color: #f59e0b; }
 
-    /* ========== ADMIN ========== */
     .toggle-admin {
         width: 100%;
         background: rgba(255,255,255,0.85);
@@ -227,7 +217,6 @@
     .btn-file { background: #3b82f6; }
     .btn-file:hover { background: #2563eb; }
 
-    /* ========== HOME ========== */
     .home-card {
         background: white;
         border-radius: 14px;
@@ -277,7 +266,6 @@
 
     .hidden { display: none !important; }
 
-    /* ========== TOAST ========== */
     .toast {
         position: fixed;
         top: 24px; left: 50%;
@@ -301,7 +289,6 @@
     .toast.success { background: #10b981; }
     .toast.error { background: #ef4444; }
 
-    /* Loading spinner */
     .spinner {
         display: inline-block;
         width: 16px; height: 16px;
@@ -313,13 +300,59 @@
         vertical-align: middle;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Modal copy thủ công */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+    .modal {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 420px;
+        width: 100%;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        text-align: center;
+    }
+    .modal h3 { font-size: 17px; color: #1a1a2e; margin-bottom: 8px; }
+    .modal p { font-size: 13px; color: #666; margin-bottom: 16px; }
+    .modal input {
+        width: 100%;
+        padding: 14px;
+        border: 2px solid #667eea;
+        border-radius: 10px;
+        font-family: monospace;
+        font-size: 14px;
+        font-weight: 700;
+        color: #1a1a2e;
+        text-align: center;
+        margin-bottom: 12px;
+        background: #f8f9ff;
+    }
+    .modal button {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+    }
 </style>
 </head>
 <body>
 
 <div class="container">
 
-    <!-- ========== HOME VIEW ========== -->
     <div id="homeView" class="home-card hidden">
         <div class="logo-big">📬</div>
         <h1>Mail Manager</h1>
@@ -328,10 +361,8 @@
         <button class="enter-btn" onclick="goToRoom()">VÀO PHÒNG →</button>
     </div>
 
-    <!-- ========== MAIN VIEW ========== -->
     <div id="mainView" class="hidden">
 
-        <!-- Header -->
         <div class="app-header">
             <div class="logo">📬</div>
             <div class="info">
@@ -340,7 +371,6 @@
             </div>
         </div>
 
-        <!-- Mail hiện tại -->
         <div class="mail-card">
             <div class="label">
                 <span class="dot"></span>
@@ -352,12 +382,10 @@
             <div class="hint" id="mailHint">Bấm COPY để nhận mail này</div>
         </div>
 
-        <!-- Nút COPY -->
         <button class="copy-btn" id="copyBtn" onclick="copyMail()" disabled>
             📋 COPY MAIL
         </button>
 
-        <!-- Stats -->
         <div class="stats-row">
             <div class="stat-box total">
                 <div class="num" id="statTotal">0</div>
@@ -377,14 +405,12 @@
             </div>
         </div>
 
-        <!-- Nút mở admin -->
         <button class="toggle-admin" onclick="toggleAdmin()" id="toggleAdminBtn">
             ⚙️ MỞ KHU VỰC QUẢN TRỊ
         </button>
 
-        <!-- Admin panel -->
         <div class="admin-panel hidden" id="adminPanel">
-            <textarea id="mailInput" placeholder="Dán danh sách mail vào đây, mỗi dòng 1 mail...&#10;VD:&#10;user1@domain.com|pass1&#10;user2@domain.com|pass2"></textarea>
+            <textarea id="mailInput" placeholder="Dán danh sách mail vào đây, mỗi dòng 1 mail..."></textarea>
             <div class="admin-btns">
                 <button class="btn-add" onclick="addMails()">➕ Add</button>
                 <button class="btn-clear" onclick="clearAll()">🗑️ Xóa hết</button>
@@ -418,9 +444,7 @@
     let currentAccounts = [];
     let stats = { added: 0, duplicate: 0, other: 0 };
     let copying = false;
-    let roomLoaded = false;
 
-    // ============================================================
     function showToast(msg, type) {
         const t = document.getElementById("toast");
         t.className = "toast show" + (type ? " " + type : "");
@@ -438,14 +462,12 @@
         if (!room) {
             document.getElementById("homeView").classList.remove("hidden");
             document.getElementById("mainView").classList.add("hidden");
-            roomLoaded = false;
         } else {
             document.getElementById("homeView").classList.add("hidden");
             document.getElementById("mainView").classList.remove("hidden");
             document.getElementById("roomName").innerText = room;
             if (currentRoom !== room) {
                 currentRoom = room;
-                roomLoaded = false;
                 document.getElementById("mailDisplay").className = "mail-text loading";
                 document.getElementById("mailDisplay").innerHTML = '<span class="spinner"></span>Đang tải...';
                 loadRoom(room);
@@ -460,15 +482,11 @@
         init();
     }
 
-    // ============================================================
-    // LOAD ROOM DATA
-    // ============================================================
     function loadRoom(room) {
         db.ref("rooms/" + room + "/accounts").on("value", (snap) => {
             currentAccounts = snap.val() || [];
             document.getElementById("statTotal").innerText = currentAccounts.length;
             renderCurrentMail();
-            roomLoaded = true;
         });
     }
 
@@ -481,7 +499,7 @@
             el.className = "mail-text";
             el.innerText = currentAccounts[0];
             btn.disabled = false;
-            hint.innerText = "Bấm COPY để nhận mail này (mail sẽ bị xóa khỏi danh sách)";
+            hint.innerText = "Bấm COPY để nhận mail. Nếu nhiều người cùng bấm, mỗi người sẽ nhận mail khác nhau.";
         } else {
             el.className = "mail-text empty";
             el.innerText = "Chưa có mail nào trong phòng";
@@ -490,9 +508,6 @@
         }
     }
 
-    // ============================================================
-    // ADD MAILS
-    // ============================================================
     function addMails() {
         const raw = document.getElementById("mailInput").value;
         const lines = raw.split("\n").map(s => s.trim()).filter(s => s.length > 0);
@@ -503,7 +518,6 @@
         const newList = currentAccounts.slice();
         let added = 0, dup = 0, other = 0;
 
-        // Đếm domain chính (chỉ để thống kê)
         const domCount = {};
         currentAccounts.forEach(m => {
             const mm = m.match(/@([^\s|]+)/);
@@ -543,9 +557,6 @@
         document.getElementById("statOther").innerText = stats.other || 0;
     }
 
-    // ============================================================
-    // CLEAR ALL
-    // ============================================================
     function clearAll() {
         if (currentAccounts.length === 0) { showToast("Danh sách đang trống"); return; }
         if (!confirm("Xóa tất cả " + currentAccounts.length + " mail trong phòng này?\nHành động không thể hoàn tác!")) return;
@@ -556,9 +567,6 @@
         });
     }
 
-    // ============================================================
-    // LOAD FILE
-    // ============================================================
     function loadFile(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -572,58 +580,92 @@
     }
 
     // ============================================================
-    // COPY MAIL (copy + xóa khỏi danh sách)
+    // COPY MAIL - DÙNG FIREBASE TRANSACTION (ATOMIC)
     // ============================================================
     function copyMail() {
         if (copying) return;
         if (currentAccounts.length === 0) { showToast("Hết mail rồi!", "error"); return; }
 
-        const mail = currentAccounts[0];
         copying = true;
-        document.getElementById("copyBtn").disabled = true;
+        const btn = document.getElementById("copyBtn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="border-color: rgba(255,255,255,0.3); border-top-color: white;"></span> ĐANG LẤY MAIL...';
 
-        const doCopy = () => {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                return navigator.clipboard.writeText(mail);
+        const ref = db.ref("rooms/" + currentRoom + "/accounts");
+        let claimedMail = null;
+
+        // Transaction: đọc list hiện tại, lấy phần tử đầu, trả về list đã bỏ phần tử đầu
+        // Firebase sẽ tự động retry nếu data bị thay đổi bởi máy khác giữa chừng
+        ref.transaction((list) => {
+            if (!list || list.length === 0) {
+                return; // abort - không có mail
             }
-            return new Promise((resolve, reject) => {
-                const ta = document.createElement("textarea");
-                ta.value = mail;
-                ta.style.position = "fixed";
-                ta.style.opacity = "0";
-                document.body.appendChild(ta);
-                ta.select();
-                try { document.execCommand("copy"); resolve(); }
-                catch (err) { reject(err); }
-                document.body.removeChild(ta);
-            });
-        };
+            claimedMail = list[0];
+            return list.slice(1); // xóa mail đầu tiên
+        }, (error, committed, snapshot) => {
+            btn.disabled = false;
+            btn.innerHTML = '📋 COPY MAIL';
+            copying = false;
 
-        doCopy()
-            .then(() => {
-                showToast("✅ Đã copy: " + mail, "success");
-                // Đọc lại dữ liệu mới nhất từ Firebase rồi xóa mail vừa copy
-                return db.ref("rooms/" + currentRoom + "/accounts").once("value");
-            })
-            .then((snap) => {
-                const freshList = snap.val() || [];
-                const newList = freshList.filter(m => m !== mail);
-                return db.ref("rooms/" + currentRoom + "/accounts").set(newList);
-            })
-            .then(() => {
-                copying = false;
-                // renderCurrentMail sẽ tự chạy do listener on("value")
-            })
-            .catch((err) => {
-                copying = false;
-                document.getElementById("copyBtn").disabled = false;
-                showToast("Lỗi: " + err.message, "error");
-            });
+            if (error) {
+                showToast("Lỗi: " + error.message, "error");
+                return;
+            }
+
+            if (!committed || !claimedMail) {
+                showToast("Hết mail rồi!", "error");
+                return;
+            }
+
+            // Copy mail đã claim được
+            copyToClipboard(claimedMail)
+                .then(() => {
+                    showToast("✅ Đã copy: " + claimedMail, "success");
+                })
+                .catch(() => {
+                    // Clipboard fail → hiện modal cho user copy thủ công
+                    showManualCopyModal(claimedMail);
+                });
+        });
     }
 
-    // ============================================================
-    // TOGGLE ADMIN
-    // ============================================================
+    function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text);
+        }
+        return new Promise((resolve, reject) => {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); resolve(); }
+            catch (err) { reject(err); }
+            document.body.removeChild(ta);
+        });
+    }
+
+    function showManualCopyModal(mail) {
+        const overlay = document.createElement("div");
+        overlay.className = "modal-overlay";
+        overlay.innerHTML = `
+            <div class="modal">
+                <h3>📋 Mail của bạn</h3>
+                <p>Trình duyệt không cho tự động copy. Hãy bấm vào ô bên dưới và nhấn Ctrl+C (hoặc giữ để chọn):</p>
+                <input type="text" value="${mail.replace(/"/g, '&quot;')}" readonly onclick="this.select()">
+                <button onclick="this.parentElement.parentElement.remove()">ĐÓNG</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        // Tự động select
+        setTimeout(() => {
+            const inp = overlay.querySelector("input");
+            inp.focus();
+            inp.select();
+        }, 100);
+    }
+
     function toggleAdmin() {
         const panel = document.getElementById("adminPanel");
         const btn = document.getElementById("toggleAdminBtn");
