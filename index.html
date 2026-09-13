@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Phân Phối Mail Đám Mây</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; box-sizing: border-box; }
+        h2 { color: #333; text-align: center; margin-top: 0; font-size: 20px; }
+        .room-title { background: #e2f0cb; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold; color: #2d6a4f; margin-bottom: 15px; font-size: 14px; }
+        .box { background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px; text-align: center; }
+        .mail-display { font-family: monospace; font-size: 16px; color: #d63384; font-weight: bold; word-break: break-all; margin-bottom: 10px; }
+        button { width: 100%; background: #0d6efd; color: white; border: none; padding: 12px; font-size: 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        button:active { opacity: 0.8; }
+        .admin-section { margin-top: 25px; border-top: 2px dashed #ddd; padding-top: 15px; }
+        textarea { width: 100%; height: 130px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: monospace; font-size: 13px; resize: vertical; }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-warning { background: #ffc107; color: #000; }
+        input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 15px; }
+        .loading { text-align: center; color: #666; font-style: italic; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="card" id="app">
+    <!-- MÀN HÌNH CHỌN PHÒNG -->
+    <div id="homeView" style="display:none;">
+        <h2>Quản Lý & Phân Phối Mail</h2>
+        <p style="font-size: 13px; color: #666; text-align: center;">Nhập tên phòng của bạn (VD: Thoan2000, Nam123) để tạo hoặc truy cập:</p>
+        <input type="text" id="roomInput" placeholder="Nhập tên phòng...">
+        <button onclick="goToRoom()">Vào Phòng</button>
+    </div>
+
+    <!-- MÀN HÌNH TRONG PHÒNG -->
+    <div id="roomView" style="display:none;">
+        <div class="room-title" id="roomTitleDisplay">Phòng: ...</div>
+        
+        <div id="loadingBox" class="loading">Đang kết nối dữ liệu đám mây...</div>
+
+        <!-- Phần cho thiết bị nhận mail -->
+        <div id="userPart" style="display:none;">
+            <h3 style="font-size: 16px; text-align: center; color: #333; margin-top:0;">Tài Khoản Của Thiết Bị Này</h3>
+            <div class="box">
+                <div class="mail-display" id="accountDisplay">Đang tải...</div>
+            </div>
+            <button onclick="copyAccount()">📋 SAO CHÉP TÀI KHOẢN</button>
+        </div>
+
+        <!-- Phần quản trị dán mail -->
+        <div class="admin-section" id="adminPart" style="display:none;">
+            <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #333;">Khu vực Chủ Phòng (Dán danh sách mail):</div>
+            <textarea id="adminInput" placeholder="email1@domain.com|pass1&#10;email2@domain.com|pass2"></textarea>
+            <div class="btn-group">
+                <button onclick="saveRoomList()" style="flex: 2;">💾 Lưu Lên Đám Mây</button>
+                <button class="btn-warning" onclick="resetCounter()" style="flex: 1;">🔄 Reset Lượt</button>
+            </div>
+            <button onclick="goHome()" style="background: #6c757d; margin-top: 10px;">🏠 Đổi Phòng</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getRoomName() {
+        return window.location.hash.replace("#", "").trim();
+    }
+
+    function initApp() {
+        let room = getRoomName();
+        if (!room) {
+            document.getElementById("homeView").style.display = "block";
+            document.getElementById("roomView").style.display = "none";
+        } else {
+            document.getElementById("homeView").style.display = "none";
+            document.getElementById("roomView").style.display = "block";
+            document.getElementById("roomTitleDisplay").innerText = "Phòng: " + room;
+            fetchRoomData(room);
+        }
+    }
+
+    function goToRoom() {
+        let room = document.getElementById("roomInput").value.trim();
+        if(room) {
+            window.location.hash = room;
+            initApp();
+        } else {
+            alert("Vui lòng nhập tên phòng!");
+        }
+    }
+
+    function goHome() {
+        window.location.hash = "";
+        initApp();
+    }
+
+    async function fetchRoomData(room) {
+        document.getElementById("loadingBox").style.display = "block";
+        document.getElementById("userPart").style.display = "none";
+        document.getElementById("adminPart").style.display = "none";
+
+        try {
+            let response = await fetch("https://api.npoint.io/room_" + room);
+            let data = response.ok ? await response.json() : { accounts: [], counter: 0 };
+            
+            document.getElementById("loadingBox").style.display = "none";
+            document.getElementById("userPart").style.display = "block";
+            document.getElementById("adminPart").style.display = "block";
+
+            processRoomData(room, data);
+        } catch (e) {
+            document.getElementById("loadingBox").style.display = "none";
+            document.getElementById("userPart").style.display = "block";
+            document.getElementById("adminPart").style.display = "block";
+            processRoomData(room, { accounts: [], counter: 0 });
+        }
+    }
+
+    function processRoomData(room, data) {
+        let accounts = data.accounts || [];
+        document.getElementById("adminInput").value = accounts.join("\n");
+
+        let assignedIndexKey = "assigned_idx_" + room;
+        let assignedIndex = localStorage.getItem(assignedIndexKey);
+
+        if (assignedIndex === null) {
+            if (data.counter < accounts.length) {
+                assignedIndex = data.counter;
+                localStorage.setItem(assignedIndexKey, assignedIndex);
+                data.counter++;
+                updateCloudData(room, data, false);
+            } else {
+                document.getElementById("accountDisplay").innerText = "Phòng này đã hết tài khoản cấp phát!";
+                return;
+            }
+        }
+
+        if (accounts[assignedIndex]) {
+            document.getElementById("accountDisplay").innerText = accounts[assignedIndex];
+        } else {
+            document.getElementById("accountDisplay").innerText = "Tài khoản cho thiết bị này đã bị xóa khỏi hệ thống.";
+        }
+    }
+
+    async function saveRoomList() {
+        let room = getRoomName();
+        let rawText = document.getElementById("adminInput").value;
+        let lines = rawText.split("\n").map(item => item.trim()).filter(item => item.length > 0);
+        
+        let newData = {
+            accounts: lines,
+            counter: 0
+        };
+
+        localStorage.removeItem("assigned_idx_" + room);
+        await updateCloudData(room, newData, true);
+    }
+
+    async function resetCounter() {
+        let room = getRoomName();
+        if(confirm("Bạn có muốn reset lượt cấp phát để các máy nhận lại từ đầu không?")) {
+            let rawText = document.getElementById("adminInput").value;
+            let lines = rawText.split("\n").map(item => item.trim()).filter(item => item.length > 0);
+            
+            let newData = {
+                accounts: lines,
+                counter: 0
+            };
+            localStorage.removeItem("assigned_idx_" + room);
+            await updateCloudData(room, newData, true);
+        }
+    }
+
+    async function updateCloudData(room, data, showAlert) {
+        try {
+            await fetch("https://api.npoint.io/room_" + room, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+            if(showAlert) {
+                alert("Đã lưu thành công lên hệ thống đám mây!");
+                location.reload();
+            }
+        } catch(e) {
+            alert("Lỗi kết nối đám mây, vui lòng thử lại!");
+        }
+    }
+
+    function copyAccount() {
+        let text = document.getElementById("accountDisplay").innerText;
+        if(text.includes("@")) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Đã sao chép: " + text);
+            });
+        } else {
+            alert("Không có tài khoản hợp lệ!");
+        }
+    }
+
+    window.addEventListener("hashchange", initApp);
+    initApp();
+</script>
+
+</body>
+</html>
