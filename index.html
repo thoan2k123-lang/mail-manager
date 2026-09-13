@@ -5,79 +5,394 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mail Manager</title>
 <style>
-    * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
-    .container { max-width: 520px; margin: 0 auto; }
-    .header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .header .icon { font-size: 26px; }
-    .header h1 { font-size: 22px; margin: 0; color: #222; font-weight: 700; }
-    .header .room { color: #0d6efd; font-weight: 700; margin-left: 4px; }
-    .total { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 8px; }
-    .stats { background: #fff8c5; border: 1px solid #f0e68c; padding: 8px 12px; border-radius: 4px; font-size: 13px; margin-bottom: 10px; }
-    .stats .add { color: #2e7d32; font-weight: 700; }
-    .stats .dup { color: #c62828; font-weight: 700; }
-    .stats .other { color: #c62828; font-weight: 700; }
-    .stats .sep { color: #999; margin: 0 4px; }
-    textarea { width: 100%; height: 170px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; font-size: 13px; background: white; resize: vertical; display: block; }
-    .btn-row { display: flex; gap: 8px; margin-top: 10px; }
-    .btn-row button { padding: 8px 18px; border: none; border-radius: 4px; font-weight: 600; font-size: 14px; cursor: pointer; color: white; }
-    .btn-add { background: #0d6efd; }
-    .btn-add:hover { background: #0b5ed7; }
-    .btn-clear { background: #dc3545; }
-    .btn-clear:hover { background: #bb2d3b; }
-    .btn-file { background: #0d6efd; }
-    .btn-file:hover { background: #0b5ed7; }
-    .copy-btn { width: 100%; background: #0d6efd; color: white; padding: 22px; border: none; border-radius: 6px; font-size: 20px; font-weight: 700; margin-top: 18px; cursor: pointer; letter-spacing: 0.5px; }
-    .copy-btn:hover { background: #0b5ed7; }
-    .copy-btn:active { transform: scale(0.99); }
-    .home-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; }
-    .home-btn { width: 100%; padding: 12px; background: #0d6efd; color: white; border: none; border-radius: 4px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px 12px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+    .container { width: 100%; max-width: 480px; }
+
+    /* ========== HEADER ========== */
+    .app-header {
+        background: white;
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 14px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .app-header .logo {
+        width: 44px; height: 44px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+    .app-header .info { flex: 1; }
+    .app-header .title { font-size: 13px; color: #888; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+    .app-header .room-name { font-size: 20px; color: #1a1a2e; font-weight: 800; margin-top: 2px; }
+
+    /* ========== CARD MAIL HIỆN TẠI ========== */
+    .mail-card {
+        background: white;
+        border-radius: 14px;
+        padding: 22px 20px;
+        margin-bottom: 14px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        position: relative;
+        overflow: hidden;
+    }
+    .mail-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+    .mail-card .label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #667eea;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .mail-card .label .dot {
+        width: 8px; height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.2); }
+    }
+    .mail-card .mail-text {
+        font-family: 'SF Mono', Consolas, monospace;
+        font-size: 15px;
+        font-weight: 700;
+        color: #1a1a2e;
+        background: #f8f9ff;
+        border: 1.5px dashed #c7d2fe;
+        border-radius: 10px;
+        padding: 16px 14px;
+        word-break: break-all;
+        line-height: 1.5;
+        text-align: center;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .mail-card .mail-text.empty {
+        color: #9ca3af;
+        font-weight: 500;
+        font-style: italic;
+        font-family: inherit;
+        font-size: 14px;
+    }
+    .mail-card .mail-text.loading {
+        color: #667eea;
+        font-family: inherit;
+        font-weight: 600;
+    }
+    .mail-card .hint {
+        font-size: 12px;
+        color: #888;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    /* ========== NÚT COPY ========== */
+    .copy-btn {
+        width: 100%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 18px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+        transition: all 0.2s;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .copy-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(102,126,234,0.5); }
+    .copy-btn:active:not(:disabled) { transform: translateY(0); }
+    .copy-btn:disabled {
+        background: #d1d5db;
+        box-shadow: none;
+        cursor: not-allowed;
+        color: #6b7280;
+    }
+
+    /* ========== STATS ========== */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+    .stat-box {
+        background: white;
+        border-radius: 10px;
+        padding: 12px 6px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .stat-box .num { font-size: 20px; font-weight: 800; color: #1a1a2e; }
+    .stat-box .lbl { font-size: 10px; color: #888; font-weight: 600; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .stat-box.total .num { color: #667eea; }
+    .stat-box.added .num { color: #10b981; }
+    .stat-box.dup .num { color: #ef4444; }
+    .stat-box.other .num { color: #f59e0b; }
+
+    /* ========== ADMIN ========== */
+    .toggle-admin {
+        width: 100%;
+        background: rgba(255,255,255,0.85);
+        color: #4b5563;
+        border: none;
+        padding: 12px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    .toggle-admin:hover { background: white; color: #667eea; }
+
+    .admin-panel {
+        background: white;
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        margin-bottom: 14px;
+    }
+    .admin-panel textarea {
+        width: 100%;
+        height: 130px;
+        padding: 12px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        font-family: 'SF Mono', Consolas, monospace;
+        font-size: 12px;
+        resize: vertical;
+        outline: none;
+        transition: border 0.2s;
+    }
+    .admin-panel textarea:focus { border-color: #667eea; }
+    .admin-btns {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    .admin-btns button {
+        padding: 11px 6px;
+        border: none;
+        border-radius: 9px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        color: white;
+        transition: all 0.2s;
+    }
+    .btn-add { background: #10b981; }
+    .btn-add:hover { background: #059669; }
+    .btn-clear { background: #ef4444; }
+    .btn-clear:hover { background: #dc2626; }
+    .btn-file { background: #3b82f6; }
+    .btn-file:hover { background: #2563eb; }
+
+    /* ========== HOME ========== */
+    .home-card {
+        background: white;
+        border-radius: 14px;
+        padding: 30px 24px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        text-align: center;
+    }
+    .home-card .logo-big {
+        width: 70px; height: 70px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 20px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 34px;
+        margin: 0 auto 16px;
+        box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+    }
+    .home-card h1 { font-size: 22px; color: #1a1a2e; margin-bottom: 6px; }
+    .home-card p { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .home-card input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 15px;
+        outline: none;
+        margin-bottom: 12px;
+        transition: border 0.2s;
+        text-align: center;
+        font-weight: 600;
+    }
+    .home-card input:focus { border-color: #667eea; }
+    .home-card .enter-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 800;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+        transition: all 0.2s;
+    }
+    .home-card .enter-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(102,126,234,0.5); }
+
     .hidden { display: none !important; }
-    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 22px; border-radius: 25px; font-size: 14px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 90%; text-align: center; word-break: break-all; }
-    .toast.show { opacity: 1; }
+
+    /* ========== TOAST ========== */
+    .toast {
+        position: fixed;
+        top: 24px; left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        background: #1a1a2e;
+        color: white;
+        padding: 14px 22px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        z-index: 999;
+        opacity: 0;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+        max-width: 90%;
+        text-align: center;
+        word-break: break-all;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+
+    /* Loading spinner */
+    .spinner {
+        display: inline-block;
+        width: 16px; height: 16px;
+        border: 2px solid rgba(102,126,234,0.3);
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- MÀN HÌNH NHẬP PHÒNG -->
-    <div id="homeView" class="hidden">
-        <div class="header">
-            <span class="icon">📬</span>
-            <h1>Mail Manager</h1>
-        </div>
-        <p style="color:#666; font-size:14px;">Nhập tên phòng để truy cập:</p>
-        <input type="text" class="home-input" id="roomInput" placeholder="VD: Thoan2000">
-        <button class="home-btn" onclick="goToRoom()">VÀO PHÒNG</button>
+
+    <!-- ========== HOME VIEW ========== -->
+    <div id="homeView" class="home-card hidden">
+        <div class="logo-big">📬</div>
+        <h1>Mail Manager</h1>
+        <p>Nhập tên phòng để bắt đầu</p>
+        <input type="text" id="roomInput" placeholder="VD: Thoan2000" autocomplete="off">
+        <button class="enter-btn" onclick="goToRoom()">VÀO PHÒNG →</button>
     </div>
 
-    <!-- MÀN HÌNH CHÍNH -->
+    <!-- ========== MAIN VIEW ========== -->
     <div id="mainView" class="hidden">
-        <div class="header">
-            <span class="icon">📬</span>
-            <h1>Mail Manager<span class="room" id="roomName"></span></h1>
+
+        <!-- Header -->
+        <div class="app-header">
+            <div class="logo">📬</div>
+            <div class="info">
+                <div class="title">Phòng</div>
+                <div class="room-name" id="roomName">—</div>
+            </div>
         </div>
 
-        <div class="total" id="totalMail">Số mail: 0</div>
-
-        <div class="stats">
-            <span class="add">✅ Thêm: <span id="statAdd">0</span></span>
-            <span class="sep">|</span>
-            <span class="dup">❌ Trùng: <span id="statDup">0</span></span>
-            <span class="sep">|</span>
-            <span class="other">❌ Mail khác hệ thống: <span id="statOther">0</span></span>
+        <!-- Mail hiện tại -->
+        <div class="mail-card">
+            <div class="label">
+                <span class="dot"></span>
+                Gmail máy này đang lấy
+            </div>
+            <div class="mail-text loading" id="mailDisplay">
+                <span class="spinner"></span>Đang tải...
+            </div>
+            <div class="hint" id="mailHint">Bấm COPY để nhận mail này</div>
         </div>
 
-        <textarea id="mailInput" placeholder="Dán danh sách mail vào đây, mỗi dòng 1 mail..."></textarea>
+        <!-- Nút COPY -->
+        <button class="copy-btn" id="copyBtn" onclick="copyMail()" disabled>
+            📋 COPY MAIL
+        </button>
 
-        <div class="btn-row">
-            <button class="btn-add" onclick="addMails()">Add</button>
-            <button class="btn-clear" onclick="clearAll()">❌ Xóa tất cả</button>
-            <button class="btn-file" onclick="document.getElementById('fileInput').click()">📄 Tải file</button>
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-box total">
+                <div class="num" id="statTotal">0</div>
+                <div class="lbl">Còn lại</div>
+            </div>
+            <div class="stat-box added">
+                <div class="num" id="statAdd">0</div>
+                <div class="lbl">Thêm</div>
+            </div>
+            <div class="stat-box dup">
+                <div class="num" id="statDup">0</div>
+                <div class="lbl">Trùng</div>
+            </div>
+            <div class="stat-box other">
+                <div class="num" id="statOther">0</div>
+                <div class="lbl">Khác HThống</div>
+            </div>
         </div>
-        <input type="file" id="fileInput" accept=".txt" style="display:none" onchange="loadFile(event)">
 
-        <button class="copy-btn" onclick="copyMail()">✏️ COPY MAIL</button>
+        <!-- Nút mở admin -->
+        <button class="toggle-admin" onclick="toggleAdmin()" id="toggleAdminBtn">
+            ⚙️ MỞ KHU VỰC QUẢN TRỊ
+        </button>
+
+        <!-- Admin panel -->
+        <div class="admin-panel hidden" id="adminPanel">
+            <textarea id="mailInput" placeholder="Dán danh sách mail vào đây, mỗi dòng 1 mail...&#10;VD:&#10;user1@domain.com|pass1&#10;user2@domain.com|pass2"></textarea>
+            <div class="admin-btns">
+                <button class="btn-add" onclick="addMails()">➕ Add</button>
+                <button class="btn-clear" onclick="clearAll()">🗑️ Xóa hết</button>
+                <button class="btn-file" onclick="document.getElementById('fileInput').click()">📄 Tải file</button>
+            </div>
+            <input type="file" id="fileInput" accept=".txt" style="display:none" onchange="loadFile(event)">
+        </div>
+
     </div>
 </div>
 
@@ -101,25 +416,19 @@
 
     let currentRoom = "";
     let currentAccounts = [];
-    let currentCounter = 0;
     let stats = { added: 0, duplicate: 0, other: 0 };
-    let currentMail = "";
-    let assigning = false;
+    let copying = false;
+    let roomLoaded = false;
 
     // ============================================================
-    // TOAST
-    // ============================================================
-    function showToast(msg) {
+    function showToast(msg, type) {
         const t = document.getElementById("toast");
+        t.className = "toast show" + (type ? " " + type : "");
         t.innerText = msg;
-        t.classList.add("show");
         clearTimeout(t._tm);
-        t._tm = setTimeout(() => t.classList.remove("show"), 2200);
+        t._tm = setTimeout(() => t.className = "toast", 2500);
     }
 
-    // ============================================================
-    // ĐIỀU HƯỚNG
-    // ============================================================
     function getRoom() {
         return window.location.hash.replace("#", "").trim();
     }
@@ -129,81 +438,72 @@
         if (!room) {
             document.getElementById("homeView").classList.remove("hidden");
             document.getElementById("mainView").classList.add("hidden");
+            roomLoaded = false;
         } else {
             document.getElementById("homeView").classList.add("hidden");
             document.getElementById("mainView").classList.remove("hidden");
-            document.getElementById("roomName").innerText = " " + room;
-            currentRoom = room;
-            loadRoom(room);
+            document.getElementById("roomName").innerText = room;
+            if (currentRoom !== room) {
+                currentRoom = room;
+                roomLoaded = false;
+                document.getElementById("mailDisplay").className = "mail-text loading";
+                document.getElementById("mailDisplay").innerHTML = '<span class="spinner"></span>Đang tải...';
+                loadRoom(room);
+            }
         }
     }
 
     function goToRoom() {
         const r = document.getElementById("roomInput").value.trim();
-        if (!r) { alert("Vui lòng nhập tên phòng!"); return; }
+        if (!r) { showToast("Vui lòng nhập tên phòng!", "error"); return; }
         window.location.hash = r;
         init();
     }
 
     // ============================================================
-    // TẢI DỮ LIỆU PHÒNG
+    // LOAD ROOM DATA
     // ============================================================
     function loadRoom(room) {
-        db.ref("rooms/" + room).on("value", (snap) => {
-            const data = snap.val() || { accounts: [], counter: 0 };
-            currentAccounts = data.accounts || [];
-            currentCounter = data.counter || 0;
-            document.getElementById("totalMail").innerText = "Số mail: " + currentAccounts.length;
-            assignMailToDevice();
+        db.ref("rooms/" + room + "/accounts").on("value", (snap) => {
+            currentAccounts = snap.val() || [];
+            document.getElementById("statTotal").innerText = currentAccounts.length;
+            renderCurrentMail();
+            roomLoaded = true;
         });
     }
 
-    // ============================================================
-    // CẤP MAIL CHO THIẾT BỊ NÀY (tự phục hồi nếu slot lỗi)
-    // ============================================================
-    function assignMailToDevice() {
-        if (assigning) return; // tránh đệ quy khi set counter
-        const key = "assigned_v3_" + currentRoom;
-        let idx = localStorage.getItem(key);
+    function renderCurrentMail() {
+        const el = document.getElementById("mailDisplay");
+        const btn = document.getElementById("copyBtn");
+        const hint = document.getElementById("mailHint");
 
-        if (idx !== null) {
-            idx = parseInt(idx);
-            if (isNaN(idx) || !currentAccounts[idx]) {
-                localStorage.removeItem(key);
-                idx = null;
-            }
+        if (currentAccounts.length > 0) {
+            el.className = "mail-text";
+            el.innerText = currentAccounts[0];
+            btn.disabled = false;
+            hint.innerText = "Bấm COPY để nhận mail này (mail sẽ bị xóa khỏi danh sách)";
+        } else {
+            el.className = "mail-text empty";
+            el.innerText = "Chưa có mail nào trong phòng";
+            btn.disabled = true;
+            hint.innerText = "Chủ phòng cần thêm mail vào";
         }
-
-        if (idx === null) {
-            if (currentAccounts.length === 0) { currentMail = ""; return; }
-            if (currentCounter < currentAccounts.length) {
-                idx = currentCounter;
-                localStorage.setItem(key, idx);
-                assigning = true;
-                db.ref("rooms/" + currentRoom + "/counter").set(currentCounter + 1)
-                    .finally(() => { assigning = false; });
-            } else {
-                currentMail = "";
-                return;
-            }
-        }
-        currentMail = currentAccounts[idx] || "";
     }
 
     // ============================================================
-    // ADD MAIL
+    // ADD MAILS
     // ============================================================
     function addMails() {
         const raw = document.getElementById("mailInput").value;
         const lines = raw.split("\n").map(s => s.trim()).filter(s => s.length > 0);
 
-        if (lines.length === 0) { showToast("Vui lòng dán mail vào ô!"); return; }
+        if (lines.length === 0) { showToast("Vui lòng dán mail vào ô!", "error"); return; }
 
         const existing = new Set(currentAccounts.map(m => m.toLowerCase()));
         const newList = currentAccounts.slice();
         let added = 0, dup = 0, other = 0;
 
-        // Xác định domain chính (chỉ để đếm, không chặn)
+        // Đếm domain chính (chỉ để thống kê)
         const domCount = {};
         currentAccounts.forEach(m => {
             const mm = m.match(/@([^\s|]+)/);
@@ -227,17 +527,14 @@
         updateStats();
 
         if (added === 0) {
-            showToast("Không có mail mới (trùng: " + dup + ")");
+            showToast("Không có mail mới (trùng: " + dup + ")", "error");
             return;
         }
 
-        db.ref("rooms/" + currentRoom).set({
-            accounts: newList,
-            counter: currentCounter
-        }).then(() => {
+        db.ref("rooms/" + currentRoom + "/accounts").set(newList).then(() => {
             document.getElementById("mailInput").value = "";
-            showToast("Đã thêm " + added + " mail");
-        }).catch(e => alert("Lỗi: " + e.message));
+            showToast("✅ Đã thêm " + added + " mail", "success");
+        }).catch(e => showToast("Lỗi: " + e.message, "error"));
     }
 
     function updateStats() {
@@ -247,21 +544,20 @@
     }
 
     // ============================================================
-    // XÓA TẤT CẢ
+    // CLEAR ALL
     // ============================================================
     function clearAll() {
         if (currentAccounts.length === 0) { showToast("Danh sách đang trống"); return; }
         if (!confirm("Xóa tất cả " + currentAccounts.length + " mail trong phòng này?\nHành động không thể hoàn tác!")) return;
-        db.ref("rooms/" + currentRoom).set({ accounts: [], counter: 0 }).then(() => {
-            localStorage.removeItem("assigned_v3_" + currentRoom);
+        db.ref("rooms/" + currentRoom + "/accounts").set([]).then(() => {
             stats = { added: 0, duplicate: 0, other: 0 };
             updateStats();
-            showToast("Đã xóa tất cả mail");
+            showToast("Đã xóa tất cả mail", "success");
         });
     }
 
     // ============================================================
-    // TẢI FILE TXT
+    // LOAD FILE
     // ============================================================
     function loadFile(e) {
         const file = e.target.files[0];
@@ -269,39 +565,75 @@
         const reader = new FileReader();
         reader.onload = (ev) => {
             document.getElementById("mailInput").value = ev.target.result;
-            showToast("Đã tải file: " + file.name);
+            showToast("Đã tải file: " + file.name, "success");
         };
         reader.readAsText(file);
         e.target.value = "";
     }
 
     // ============================================================
-    // COPY MAIL
+    // COPY MAIL (copy + xóa khỏi danh sách)
     // ============================================================
     function copyMail() {
-        // Nếu chưa có mail, thử cấp lại
-        if (!currentMail) assignMailToDevice();
+        if (copying) return;
+        if (currentAccounts.length === 0) { showToast("Hết mail rồi!", "error"); return; }
 
-        if (!currentMail) {
-            if (currentAccounts.length === 0) {
-                showToast("Phòng chưa có mail nào!");
-            } else {
-                showToast("Đã hết mail để cấp cho thiết bị này!");
+        const mail = currentAccounts[0];
+        copying = true;
+        document.getElementById("copyBtn").disabled = true;
+
+        const doCopy = () => {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(mail);
             }
-            return;
-        }
+            return new Promise((resolve, reject) => {
+                const ta = document.createElement("textarea");
+                ta.value = mail;
+                ta.style.position = "fixed";
+                ta.style.opacity = "0";
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand("copy"); resolve(); }
+                catch (err) { reject(err); }
+                document.body.removeChild(ta);
+            });
+        };
 
-        navigator.clipboard.writeText(currentMail).then(() => {
-            showToast("Đã copy: " + currentMail);
-        }).catch(() => {
-            const ta = document.createElement("textarea");
-            ta.value = currentMail;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand("copy");
-            document.body.removeChild(ta);
-            showToast("Đã copy: " + currentMail);
-        });
+        doCopy()
+            .then(() => {
+                showToast("✅ Đã copy: " + mail, "success");
+                // Đọc lại dữ liệu mới nhất từ Firebase rồi xóa mail vừa copy
+                return db.ref("rooms/" + currentRoom + "/accounts").once("value");
+            })
+            .then((snap) => {
+                const freshList = snap.val() || [];
+                const newList = freshList.filter(m => m !== mail);
+                return db.ref("rooms/" + currentRoom + "/accounts").set(newList);
+            })
+            .then(() => {
+                copying = false;
+                // renderCurrentMail sẽ tự chạy do listener on("value")
+            })
+            .catch((err) => {
+                copying = false;
+                document.getElementById("copyBtn").disabled = false;
+                showToast("Lỗi: " + err.message, "error");
+            });
+    }
+
+    // ============================================================
+    // TOGGLE ADMIN
+    // ============================================================
+    function toggleAdmin() {
+        const panel = document.getElementById("adminPanel");
+        const btn = document.getElementById("toggleAdminBtn");
+        if (panel.classList.contains("hidden")) {
+            panel.classList.remove("hidden");
+            btn.innerText = "⚙️ ĐÓNG KHU VỰC QUẢN TRỊ";
+        } else {
+            panel.classList.add("hidden");
+            btn.innerText = "⚙️ MỞ KHU VỰC QUẢN TRỊ";
+        }
     }
 
     window.addEventListener("hashchange", init);
