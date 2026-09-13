@@ -19,6 +19,7 @@
         .btn-warning { background: #ffc107; color: #000; }
         input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 15px; }
         .loading { text-align: center; color: #666; font-style: italic; padding: 20px; }
+        .toggle-admin { background: #6c757d; margin-top: 10px; font-size: 13px; padding: 8px; }
     </style>
 </head>
 <body>
@@ -36,7 +37,7 @@
     <div id="roomView" style="display:none;">
         <div class="room-title" id="roomTitleDisplay">Phòng: ...</div>
         
-        <div id="loadingBox" class="loading">Đang tải dữ liệu từ đám mây...</div>
+        <div id="loadingBox" class="loading">Đang tải dữ liệu phòng...</div>
 
         <!-- Phần cho thiết bị nhận mail -->
         <div id="userPart" style="display:none;">
@@ -47,12 +48,15 @@
             <button onclick="copyAccount()">📋 SAO CHÉP TÀI KHOẢN</button>
         </div>
 
+        <!-- Nút ẩn/hiện khu vực admin -->
+        <button class="toggle-admin" onclick="toggleAdmin()" id="toggleAdminBtn">⚙️ Hiện khu vực Chủ Phòng</button>
+
         <!-- Phần quản trị dán mail -->
         <div class="admin-section" id="adminPart" style="display:none;">
             <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #333;">Khu vực Chủ Phòng (Dán danh sách mail):</div>
             <textarea id="adminInput" placeholder="email1@domain.com|pass1&#10;email2@domain.com|pass2"></textarea>
             <div class="btn-group">
-                <button onclick="saveRoomList()" style="flex: 2;">💾 Lưu Lên Đám Mây</button>
+                <button onclick="saveRoomList()" style="flex: 2;">💾 Lưu Danh Sách</button>
                 <button class="btn-warning" onclick="resetCounter()" style="flex: 1;">🔄 Reset Lượt</button>
             </div>
             <button onclick="goHome()" style="background: #6c757d; margin-top: 10px;">🏠 Đổi Phòng</button>
@@ -60,9 +64,34 @@
     </div>
 </div>
 
+<!-- ===== FIREBASE SDK (compat v9) ===== -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
 <script>
+    // ============================================================
+    // CẤU HÌNH FIREBASE CỦA BẠN
+    // ============================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyAFTBub56US4pY2NhZIB9s3XGPktd4VKko",
+        authDomain: "mail-manager-620f4.firebaseapp.com",
+        databaseURL: "https://mail-manager-620f4-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "mail-manager-620f4",
+        storageBucket: "mail-manager-620f4.firebasestorage.app",
+        messagingSenderId: "1093473633575",
+        appId: "1:1093473633575:web:556ed50c43e5fda06ad502"
+    };
+
+    // Khởi tạo Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ============================================================
+    // CÁC HÀM XỬ LÝ CHÍNH
+    // ============================================================
+
     function getRoomName() {
-        return window.location.hash.replace("#", "").trim().toUpperCase();
+        return window.location.hash.replace("#", "").trim();
     }
 
     function initApp() {
@@ -74,13 +103,13 @@
             document.getElementById("homeView").style.display = "none";
             document.getElementById("roomView").style.display = "block";
             document.getElementById("roomTitleDisplay").innerText = "Phòng: " + room;
-            fetchCloudData(room);
+            loadData(room);
         }
     }
 
     function goToRoom() {
-        let room = document.getElementById("roomInput"].value.trim();
-        if(room) {
+        let room = document.getElementById("roomInput").value.trim();
+        if (room) {
             window.location.hash = room;
             initApp();
         } else {
@@ -93,145 +122,131 @@
         initApp();
     }
 
-    // Sử dụng dịch vụ JSONBin công khai miễn phí để đồng bộ thật giữa các thiết bị
-    async function fetchCloudData(room) {
+    function toggleAdmin() {
+        const adminPart = document.getElementById("adminPart");
+        const btn = document.getElementById("toggleAdminBtn");
+        if (adminPart.style.display === "none") {
+            adminPart.style.display = "block";
+            btn.innerText = "⚙️ Ẩn khu vực Chủ Phòng";
+        } else {
+            adminPart.style.display = "none";
+            btn.innerText = "⚙️ Hiện khu vực Chủ Phòng";
+        }
+    }
+
+    // ============================================================
+    // ĐỌC DỮ LIỆU TỪ FIREBASE (realtime)
+    // ============================================================
+
+    function loadData(room) {
         document.getElementById("loadingBox").style.display = "block";
         document.getElementById("userPart").style.display = "none";
-        document.getElementById("adminPart").style.display = "none";
 
-        try {
-            let res = await fetch("https://api.jsonbin.io/v3/b/661d9a2de41b4d34e44a45a6/latest", {
-                headers: { "X-Master-Key": "$2a$10$7v5Q... (public)" } // Dùng public bin cơ bản
-            });
-            // Tạm dùng giải pháp lưu trữ nhanh qua JSONbin public bin chung phân loại theo key phòng
-            let response = await fetch("https://api.npoint.io/" + getBinId(room));
-            let data = response.ok ? await response.json() : { accounts: [], assigned: {} };
-            
-            renderData(room, data);
-        } catch (e) {
-            // Fallback nếu lỗi kết nối
-            renderData(room, { accounts: [], assigned: {} });
-        }
-    }
-
-    // Giải pháp tối ưu: Dùng npoint.io với id động theo tên phòng chuẩn
-    async function fetchCloudData(room) {
-        document.getElementById("loadingBox").style.display = "block";
-        document.getElementById("userPart").style.display = "none";
-        document.getElementById("adminPart").style.display = "none";
-
-        try {
-            let res = await fetch("https://api.npoint.io/mailroom_" + room);
-            let data = res.ok ? await res.json() : { accounts: [] };
-            
+        // Lắng nghe dữ liệu phòng theo thời gian thực
+        db.ref("rooms/" + room).on("value", (snapshot) => {
+            const data = snapshot.val() || { accounts: [], counter: 0 };
             document.getElementById("loadingBox").style.display = "none";
             document.getElementById("userPart").style.display = "block";
-            document.getElementById("adminPart").style.display = "block";
-
-            processCloudData(room, data);
-        } catch(err) {
-            document.getElementById("loadingBox").style.display = "none";
-            document.getElementById("userPart").style.display = "block";
-            document.getElementById("adminPart").style.display = "block";
-            processCloudData(room, { accounts: [] });
-        }
+            processData(room, data);
+        });
     }
 
-    function getDeviceID() {
-        let id = localStorage.getItem("my_device_id");
-        if (!id) {
-            id = "dev_" + Math.random().toString(36.substring(2, 9));
-            localStorage.setItem("my_device_id", id);
-        }
-        return id;
-    }
-
-    function processCloudData(room, data) {
+    function processData(room, data) {
         let accounts = data.accounts || [];
         document.getElementById("adminInput").value = accounts.join("\n");
 
-        let devId = getDeviceID();
-        let assignments = data.assignments || {};
+        // Slot của thiết bị này vẫn lưu local
+        let assignedKey = "assigned_slot_v2_" + room;
+        let assignedIndex = localStorage.getItem(assignedKey);
 
-        // Nếu thiết bị này đã được cấp 1 mail trước đó trong cloud, lấy lại đúng mail đó
-        let assignedMail = assignments[devId];
-
-        if (!assignedMail) {
-            // Tìm xem mail nào chưa ai nhận thì cấp cho máy này
-            let usedMails = Object.values(assignments);
-            let availableMail = accounts.find(m => !usedMails.includes(m));
-
-            if (availableMail) {
-                assignedMail = availableMail;
-                assignments[devId] = assignedMail;
-                // Lưu ngược lên mây
-                saveToCloud(room, { accounts: accounts, assignments: assignments }, false);
+        if (assignedIndex === null) {
+            if (accounts.length > 0 && data.counter < accounts.length) {
+                assignedIndex = data.counter;
+                localStorage.setItem(assignedKey, assignedIndex);
+                data.counter++;
+                // Cập nhật counter lên Firebase
+                db.ref("rooms/" + room + "/counter").set(data.counter);
             } else {
-                document.getElementById("accountDisplay").innerText = "Phòng này đã hết tài khoản hoặc tất cả máy đã nhận hết!";
+                document.getElementById("accountDisplay").innerText = "Chưa có tài khoản nào trong phòng này!";
                 return;
             }
         }
 
-        if (assignedMail) {
-            document.getElementById("accountDisplay").innerText = assignedMail;
+        if (accounts[assignedIndex]) {
+            document.getElementById("accountDisplay").innerText = accounts[assignedIndex];
         } else {
-            document.getElementById("accountDisplay").innerText = "Chưa có tài khoản trong phòng này!";
+            document.getElementById("accountDisplay").innerText = "Chưa có tài khoản hoặc danh sách đã bị thay đổi.";
         }
     }
 
-    async function saveRoomList() {
+    // ============================================================
+    // GHI DỮ LIỆU LÊN FIREBASE
+    // ============================================================
+
+    function saveRoomList() {
         let room = getRoomName();
         let rawText = document.getElementById("adminInput").value;
         let lines = rawText.split("\n").map(item => item.trim()).filter(item => item.length > 0);
-        
+
         let newData = {
             accounts: lines,
-            assignments: {} // Reset phân phối khi chủ phòng đổi danh sách mới
+            counter: 0
         };
 
-        await saveToCloud(room, newData, true);
+        // Xóa slot cũ trên máy này để nhận lại từ đầu
+        localStorage.removeItem("assigned_slot_v2_" + room);
+
+        // Ghi lên Firebase
+        db.ref("rooms/" + room).set(newData)
+            .then(() => {
+                alert("Đã lưu danh sách thành công!");
+            })
+            .catch((error) => {
+                alert("Lỗi khi lưu: " + error.message);
+            });
     }
 
-    async function resetCounter() {
+    function resetCounter() {
         let room = getRoomName();
-        if(confirm("Bạn có muốn reset lại toàn bộ lượt cấp phát cho các thiết bị không?")) {
+        if (confirm("Bạn có muốn reset lượt cấp phát để nhận lại từ đầu không?")) {
             let rawText = document.getElementById("adminInput").value;
             let lines = rawText.split("\n").map(item => item.trim()).filter(item => item.length > 0);
-            
+
             let newData = {
                 accounts: lines,
-                assignments: {}
+                counter: 0
             };
-            await saveToCloud(room, newData, true);
+
+            localStorage.removeItem("assigned_slot_v2_" + room);
+
+            db.ref("rooms/" + room).set(newData)
+                .then(() => {
+                    alert("Đã reset thành công!");
+                })
+                .catch((error) => {
+                    alert("Lỗi khi reset: " + error.message);
+                });
         }
     }
 
-    async function saveToCloud(room, data, showAlert) {
-        try {
-            await fetch("https://api.npoint.io/mailroom_" + room, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-            if(showAlert) {
-                alert("Đã lưu và đồng bộ lên đám mây thành công!");
-                location.reload();
-            }
-        } catch(e) {
-            alert("Lỗi kết nối đám mây!");
-        }
-    }
+    // ============================================================
+    // SAO CHÉP TÀI KHOẢN
+    // ============================================================
 
     function copyAccount() {
         let text = document.getElementById("accountDisplay").innerText;
-        if(text.includes("@")) {
+        if (text.includes("@")) {
             navigator.clipboard.writeText(text).then(() => {
                 alert("Đã sao chép: " + text);
             });
         } else {
-            alert("Không có tài khoản hợp lệ!");
+            alert("Không có tài khoản hợp lệ để sao chép!");
         }
     }
+
+    // ============================================================
+    // KHỞI CHẠY
+    // ============================================================
 
     window.addEventListener("hashchange", initApp);
     initApp();
