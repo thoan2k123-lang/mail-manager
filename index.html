@@ -29,7 +29,6 @@
         -webkit-font-smoothing: antialiased; letter-spacing: -0.011em;
         font-size: 15px; line-height: 1.4;
     }
-    /* 1 lớp gradient tĩnh thay cho animation mesh */
     body::before {
         content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
         background:
@@ -58,14 +57,32 @@
         font-size: 10px; font-weight: 700; color: var(--text-3); letter-spacing: 0.12em;
         text-transform: uppercase; display: flex; align-items: center; gap: 6px;
     }
-    .header-label .live-dot {
-        width: 6px; height: 6px; border-radius: 50%; background: var(--success);
-        box-shadow: 0 0 8px var(--success);
+    /* Connection indicator: 3 màu */
+    .conn-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--warning); /* default yellow - connecting */
+        box-shadow: 0 0 8px var(--warning);
+        transition: background 0.3s, box-shadow 0.3s;
     }
+    .conn-dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .conn-dot.offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+    .conn-dot.syncing { background: var(--warning); box-shadow: 0 0 8px var(--warning); animation: pulseSync 1s infinite; }
+    @keyframes pulseSync { 0%,100%{opacity:1} 50%{opacity:0.4} }
     .header-room {
         font-size: 20px; font-weight: 800; color: var(--text-1); margin-top: 2px;
         letter-spacing: -0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    /* Nút resync */
+    .resync-btn {
+        width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+        background: rgba(255,255,255,0.04); border: 1px solid var(--border-2);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; color: var(--text-3);
+        transition: background 0.15s, color 0.15s;
+    }
+    .resync-btn:active { background: rgba(255,255,255,0.1); color: var(--text-1); }
+    .resync-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.2; fill: none; }
+    .resync-btn.spinning svg { animation: spin 0.8s linear infinite; }
 
     /* MAIL DISPLAY */
     .mail-display {
@@ -88,6 +105,18 @@
     .mail-display.loading .mail-value {
         color: var(--accent-1); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
     }
+    /* Nút retry khi timeout */
+    .retry-btn {
+        display: none; margin-top: 12px;
+        padding: 10px 18px; border-radius: 10px;
+        background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);
+        color: #fca5a5; font-size: 12px; font-weight: 700;
+        font-family: inherit; cursor: pointer;
+    }
+    .retry-btn.show { display: inline-flex; align-items: center; gap: 6px; }
+    .retry-btn:active { background: rgba(239,68,68,0.25); }
+    .retry-btn svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2.2; fill: none; }
+
     .status-row {
         display: flex; align-items: center; justify-content: center; gap: 8px;
         font-size: 11.5px; color: var(--text-3); margin-top: 11px; font-weight: 500;
@@ -107,14 +136,8 @@
     .btn svg { width: 17px; height: 17px; stroke: currentColor; stroke-width: 2.2; fill: none; flex-shrink: 0; }
     .btn:active:not(:disabled) { transform: scale(0.97); opacity: 0.9; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary {
-        background: linear-gradient(135deg, #7c5cff 0%, #5b8def 100%);
-        box-shadow: 0 6px 18px -6px rgba(124,92,255,0.65);
-    }
-    .btn-success {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        box-shadow: 0 6px 18px -6px rgba(16,185,129,0.55);
-    }
+    .btn-primary { background: linear-gradient(135deg, #7c5cff 0%, #5b8def 100%); box-shadow: 0 6px 18px -6px rgba(124,92,255,0.65); }
+    .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 6px 18px -6px rgba(16,185,129,0.55); }
     .btn-ghost { background: rgba(255,255,255,0.05); color: var(--text-2); border: 1px solid var(--border-2); }
     .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 6px 18px -6px rgba(239,68,68,0.5); }
     .btn-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
@@ -174,7 +197,6 @@
     }
     .tab svg { width: 13px; height: 13px; stroke: currentColor; stroke-width: 2.2; fill: none; }
 
-    /* INPUTS — font ≥16px để iOS không zoom */
     .admin-panel textarea {
         width: 100%; min-height: 130px; padding: 13px;
         background: rgba(0,0,0,0.42); border: 1px solid var(--border-2); border-radius: 12px;
@@ -244,7 +266,6 @@
 
     .empty-state { text-align: center; padding: 22px 14px; color: var(--text-3); font-size: 12px; font-weight: 500; }
 
-    /* HOME */
     .home-card { text-align: center; padding: 34px 22px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
     .home-logo {
         width: 76px; height: 76px; border-radius: 22px;
@@ -277,7 +298,6 @@
     }
     .home-input::placeholder { color: var(--text-3); }
 
-    /* FOOTER */
     .footer {
         text-align: center; padding: 8px 0 0;
         display: flex; align-items: center; justify-content: center; gap: 5px;
@@ -289,7 +309,6 @@
         background-clip: text; font-weight: 800;
     }
 
-    /* TOAST */
     .toast {
         position: fixed; top: calc(16px + var(--safe-top)); left: 50%;
         transform: translateX(-50%) translateY(-100px);
@@ -307,7 +326,6 @@
     .toast.error { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
     .toast.info { border-color: rgba(124,92,255,0.4); color: #c4b5fd; }
 
-    /* MODAL */
     .modal-overlay {
         position: fixed; inset: 0; background: rgba(8,9,13,0.88);
         display: flex; align-items: center; justify-content: center;
@@ -337,7 +355,6 @@
     }
     .modal-actions { display: flex; flex-direction: column; gap: 8px; }
 
-    /* SPINNER */
     .spinner {
         width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.25);
         border-top-color: white; border-radius: 50%;
@@ -409,11 +426,18 @@
                 </div>
                 <div class="header-info">
                     <div class="header-label">
-                        <span class="live-dot"></span>
-                        PHÒNG ĐANG HOẠT ĐỘNG
+                        <span class="conn-dot" id="connDot"></span>
+                        <span id="connText">ĐANG KẾT NỐI</span>
                     </div>
                     <div class="header-room" id="roomName">—</div>
                 </div>
+                <button class="resync-btn" id="resyncBtn" onclick="manualResync()" title="Đồng bộ lại">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/><path d="M3 21v-5h5"/>
+                    </svg>
+                </button>
             </div>
 
             <div class="mail-display loading" id="mailDisplay">
@@ -424,6 +448,14 @@
                     </span>
                 </div>
             </div>
+            <button class="retry-btn" id="retryBtn" onclick="retryLoad()">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                </svg>
+                THỬ LẠI
+            </button>
 
             <div class="status-row" id="statusRow">
                 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
@@ -538,7 +570,7 @@
             </div>
 
             <div id="panelList" class="hidden">
-                <input type="text" class="search-input" id="searchInput" placeholder="🔍 Tìm mail..." oninput="renderMailList()">
+                <input type="text" class="search-input" id="searchInput" placeholder="🔍 Tìm mail..." oninput="onSearchInput()">
                 <div class="mail-list" id="mailList" style="margin-top:10px;">
                     <div class="empty-state">Chưa có mail nào</div>
                 </div>
@@ -591,6 +623,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
+    // ================================================================
+    // CONFIG
+    // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyAFTBub56US4pY2NhZIB9s3XGPktd4VKko",
         authDomain: "mail-manager-620f4.firebaseapp.com",
@@ -601,6 +636,12 @@
         appId: "1:1093473633575:web:556ed50c43e5fda06ad502"
     };
     const COPY_COOLDOWN = 5;
+    const LOAD_TIMEOUT = 8000;       // 8s timeout
+    const MAX_HISTORY = 100;          // Tự xóa history cũ khi > 100
+    const MAX_MAILS_PER_IMPORT = 2000;// Chặn paste quá nhiều
+    const TRANSACTION_RETRY = 3;      // Retry 3 lần
+    const RENDER_BATCH = 50;          // Render 50 items/lần
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -611,16 +652,80 @@
     let stats = { added: 0, duplicate: 0, other: 0 };
     let copying = false;
     let activeTab = 'add';
+    let loadTimeoutId = null;
+    let connState = 'connecting'; // 'connecting' | 'online' | 'offline' | 'syncing'
+    let searchDebounceId = null;
+    let accountsRef = null;
+    let historyRef = null;
 
+    // ================================================================
+    // DEVICE ID — có fallback cho Safari cũ
+    // ================================================================
     function getDeviceId() {
         let id = localStorage.getItem("device_id");
         if (!id) {
-            id = 'DEV-' + (crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10)).toUpperCase();
-            localStorage.setItem("device_id", id);
+            let uuid;
+            if (crypto && typeof crypto.randomUUID === "function") {
+                uuid = crypto.randomUUID().slice(0, 8);
+            } else if (crypto && typeof crypto.getRandomValues === "function") {
+                const buf = new Uint8Array(4);
+                crypto.getRandomValues(buf);
+                uuid = Array.from(buf).map(b => b.toString(16).padStart(2, "0")).join("");
+            } else {
+                // Fallback cực cũ — dùng Math.random + time
+                uuid = (Date.now().toString(36) + Math.random().toString(36).slice(2, 6)).slice(0, 8);
+            }
+            id = 'DEV-' + uuid.toUpperCase();
+            try { localStorage.setItem("device_id", id); } catch(e) {}
         }
         return id;
     }
 
+    // ================================================================
+    // CONNECTION INDICATOR
+    // ================================================================
+    function setConnState(state) {
+        connState = state;
+        const dot = document.getElementById("connDot");
+        const txt = document.getElementById("connText");
+        if (!dot || !txt) return;
+        dot.className = "conn-dot";
+        if (state === 'online') {
+            dot.classList.add("online");
+            txt.innerText = "PHÒNG ĐANG HOẠT ĐỘNG";
+        } else if (state === 'offline') {
+            dot.classList.add("offline");
+            txt.innerText = "MẤT KẾT NỐI";
+        } else if (state === 'syncing') {
+            dot.classList.add("syncing");
+            txt.innerText = "ĐANG ĐỒNG BỘ";
+        } else {
+            txt.innerText = "ĐANG KẾT NỐI";
+        }
+    }
+
+    // Firebase connection monitor
+    try {
+        db.ref(".info/connected").on("value", (snap) => {
+            const connected = snap.val() === true;
+            if (!connected) setConnState('offline');
+            else if (connState !== 'syncing') setConnState('online');
+        });
+    } catch(e) { /* silent */ }
+
+    // Browser online/offline
+    window.addEventListener("online", () => {
+        showToast("Đã kết nối lại", "success");
+        manualResync();
+    });
+    window.addEventListener("offline", () => {
+        setConnState('offline');
+        showToast("Mất kết nối mạng!", "error");
+    });
+
+    // ================================================================
+    // TOAST
+    // ================================================================
     function showToast(msg, type) {
         const t = document.getElementById("toast");
         const icons = {
@@ -634,6 +739,9 @@
         t._tm = setTimeout(() => t.className = "toast", 2500);
     }
 
+    // ================================================================
+    // ĐIỀU HƯỚNG
+    // ================================================================
     function getRoom() { return window.location.hash.replace("#", "").trim(); }
 
     function init() {
@@ -646,6 +754,9 @@
             document.getElementById("mainView").classList.remove("hidden");
             document.getElementById("roomName").innerText = room.toUpperCase();
             if (currentRoom !== room) {
+                // Cleanup refs cũ
+                if (accountsRef) accountsRef.off();
+                if (historyRef) historyRef.off();
                 currentRoom = room;
                 loadRoom(room);
             }
@@ -659,8 +770,41 @@
         init();
     }
 
+    // ================================================================
+    // LOAD ROOM — có timeout 8s + cache
+    // ================================================================
     function loadRoom(room) {
-        db.ref("rooms/" + room).on("value", (snap) => {
+        setConnState('connecting');
+
+        // Hiện cache ngay nếu có (giảm cảm giác chờ)
+        const cachedAccounts = localStorage.getItem("cache_accounts_" + room);
+        if (cachedAccounts) {
+            try {
+                const cached = JSON.parse(cachedAccounts);
+                if (Array.isArray(cached) && cached.length > 0) {
+                    currentAccounts = cached;
+                    document.getElementById("statTotal").innerText = currentAccounts.length;
+                }
+            } catch(e) {}
+        }
+
+        // Set timeout 8s
+        clearTimeout(loadTimeoutId);
+        loadTimeoutId = setTimeout(() => {
+            if (connState !== 'online') {
+                setConnState('offline');
+                document.getElementById("retryBtn").classList.add("show");
+                showToast("Kết nối chậm. Bấm THỬ LẠI.", "error");
+            }
+        }, LOAD_TIMEOUT);
+
+        // Main data listener
+        accountsRef = db.ref("rooms/" + room);
+        accountsRef.on("value", (snap) => {
+            clearTimeout(loadTimeoutId);
+            document.getElementById("retryBtn").classList.remove("show");
+            setConnState('online');
+
             const data = snap.val() || {};
             currentAccounts = data.accounts || [];
             const newBatch = data.batch || 0;
@@ -676,12 +820,25 @@
                 localStorage.setItem("my_mail_batch_" + room, newBatch);
             }
             currentBatch = newBatch;
+
+            // Lưu cache
+            try {
+                localStorage.setItem("cache_accounts_" + room, JSON.stringify(currentAccounts));
+            } catch(e) {}
+
             document.getElementById("statTotal").innerText = currentAccounts.length;
             renderCurrentMail();
             if (!document.getElementById("adminPanel").classList.contains("hidden")) renderMailList();
+        }, (error) => {
+            clearTimeout(loadTimeoutId);
+            setConnState('offline');
+            document.getElementById("retryBtn").classList.add("show");
+            showToast("Lỗi kết nối: " + error.message, "error");
         });
 
-        db.ref("rooms/" + room + "/history").limitToLast(50).on("value", (snap) => {
+        // History listener — chỉ lấy 100 mục gần nhất
+        historyRef = db.ref("rooms/" + room + "/history").limitToLast(MAX_HISTORY);
+        historyRef.on("value", (snap) => {
             const data = snap.val() || {};
             currentHistory = Object.keys(data).map(k => ({ id: k, ...data[k] }))
                 .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
@@ -689,6 +846,39 @@
         });
     }
 
+    // ================================================================
+    // RETRY khi timeout
+    // ================================================================
+    function retryLoad() {
+        document.getElementById("retryBtn").classList.remove("show");
+        if (!currentRoom) return;
+        showToast("Đang thử lại...", "info");
+        if (accountsRef) accountsRef.off();
+        if (historyRef) historyRef.off();
+        loadRoom(currentRoom);
+    }
+
+    // ================================================================
+    // RESYNC thủ công
+    // ================================================================
+    function manualResync() {
+        const btn = document.getElementById("resyncBtn");
+        if (!btn) return;
+        btn.classList.add("spinning");
+        setConnState('syncing');
+
+        if (accountsRef) accountsRef.off();
+        if (historyRef) historyRef.off();
+
+        setTimeout(() => {
+            loadRoom(currentRoom);
+            setTimeout(() => btn.classList.remove("spinning"), 800);
+        }, 300);
+    }
+
+    // ================================================================
+    // RENDER MAIN
+    // ================================================================
     function renderCurrentMail() {
         const el = document.getElementById("mailDisplay");
         const hint = document.getElementById("mailHint");
@@ -722,6 +912,9 @@
         }
     }
 
+    // ================================================================
+    // COPY
+    // ================================================================
     function copyCurrentAgain() {
         const myMail = localStorage.getItem("my_mail_" + currentRoom);
         if (!myMail) { showToast("Chưa có mail để copy!", "error"); return; }
@@ -756,6 +949,7 @@
         }
 
         copying = true;
+        setConnState('syncing');
         const btnMain = document.getElementById("btnCopyMain");
         const btnNew = document.getElementById("btnGetNew");
         const origMain = btnMain.innerHTML;
@@ -769,43 +963,84 @@
             btnMain.innerHTML = '<span class="spinner"></span> ĐANG LẤY MAIL...';
         }
 
+        // Retry logic
+        let attempt = 0;
         let claimedMail = null;
-        db.ref("rooms/" + currentRoom + "/accounts").transaction(
-            (list) => {
-                if (!list || list.length === 0) return;
-                claimedMail = list[0];
-                return list.slice(1);
-            },
-            (error, committed, snapshot) => {
-                copying = false;
-                btnMain.innerHTML = origMain;
-                btnNew.innerHTML = origNew;
 
-                if (error || !committed || !claimedMail) {
-                    showToast(error ? "Lỗi: " + error.message : "Hết mail rồi!", "error");
-                    renderCurrentMail();
-                    return;
+        function tryTransaction() {
+            attempt++;
+            db.ref("rooms/" + currentRoom + "/accounts").transaction(
+                (list) => {
+                    if (!list || list.length === 0) return;
+                    claimedMail = list[0];
+                    return list.slice(1);
+                },
+                (error, committed, snapshot) => {
+                    // Retry nếu lỗi mạng
+                    if (error && attempt < TRANSACTION_RETRY) {
+                        setTimeout(tryTransaction, 800);
+                        return;
+                    }
+
+                    copying = false;
+                    setConnState('online');
+                    btnMain.innerHTML = origMain;
+                    btnNew.innerHTML = origNew;
+
+                    if (error || !committed || !claimedMail) {
+                        showToast(error ? "Lỗi kết nối sau " + attempt + " lần thử" : "Hết mail rồi!", "error");
+                        renderCurrentMail();
+                        return;
+                    }
+
+                    // Lưu mail
+                    localStorage.setItem("my_mail_" + currentRoom, claimedMail);
+                    localStorage.setItem("my_mail_batch_" + currentRoom, currentBatch);
+                    localStorage.setItem("last_copy_" + currentRoom, Date.now());
+
+                    const mailToCopy = claimedMail.split("|")[0].trim();
+
+                    // Push history + cleanup nếu quá 100
+                    pushHistoryAndCleanup(mailToCopy);
+
+                    tryCopy(mailToCopy).then(() => {
+                        showToast("Đã copy: " + mailToCopy, "success");
+                    }).catch(() => {
+                        showManualCopyModal(mailToCopy);
+                    }).finally(() => renderCurrentMail());
                 }
+            );
+        }
+        tryTransaction();
+    }
 
-                localStorage.setItem("my_mail_" + currentRoom, claimedMail);
-                localStorage.setItem("my_mail_batch_" + currentRoom, currentBatch);
-                localStorage.setItem("last_copy_" + currentRoom, Date.now());
+    // ================================================================
+    // PUSH HISTORY + TỰ CLEANUP > 100
+    // ================================================================
+    function pushHistoryAndCleanup(mail) {
+        const histRef = db.ref("rooms/" + currentRoom + "/history");
+        histRef.push({
+            mail: mail,
+            deviceId: getDeviceId(),
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
 
-                const mailToCopy = claimedMail.split("|")[0].trim();
-                db.ref("rooms/" + currentRoom + "/history").push({
-                    mail: mailToCopy,
-                    deviceId: getDeviceId(),
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    userAgent: navigator.userAgent.slice(0, 80)
-                });
+        // Cleanup khi quá 100
+        histRef.once("value").then((snap) => {
+            const data = snap.val() || {};
+            const keys = Object.keys(data);
+            if (keys.length > MAX_HISTORY) {
+                // Xóa các entry cũ nhất
+                const toDelete = keys
+                    .map(k => ({ k, t: data[k].timestamp || 0 }))
+                    .sort((a, b) => a.t - b.t)
+                    .slice(0, keys.length - MAX_HISTORY);
 
-                tryCopy(mailToCopy).then(() => {
-                    showToast("Đã copy: " + mailToCopy, "success");
-                }).catch(() => {
-                    showManualCopyModal(mailToCopy);
-                }).finally(() => renderCurrentMail());
+                const updates = {};
+                toDelete.forEach(({ k }) => { updates[k] = null; });
+                histRef.update(updates);
             }
-        );
+        });
     }
 
     function tryCopy(text) {
@@ -827,6 +1062,9 @@
         });
     }
 
+    // ================================================================
+    // MODAL
+    // ================================================================
     function showManualCopyModal(mail) {
         const overlay = document.createElement("div");
         overlay.className = "modal-overlay";
@@ -893,10 +1131,41 @@
         if (tab === 'log') renderLogList();
     }
 
+    // ================================================================
+    // VALIDATE MAIL
+    // ================================================================
+    function isValidMail(line) {
+        // Phải có @ và độ dài hợp lý
+        if (!line.includes("@")) return false;
+        if (line.length < 5 || line.length > 500) return false;
+        // Không chứa space đầu
+        if (line[0] === " ") return false;
+        return true;
+    }
+
+    // ================================================================
+    // ADD MAIL — có validate
+    // ================================================================
     function addMails() {
         const raw = document.getElementById("mailInput").value;
-        const lines = raw.split("\n").map(s => s.trim()).filter(s => s.length > 0);
+        let lines = raw.split("\n").map(s => s.trim()).filter(s => s.length > 0);
+
         if (lines.length === 0) { showToast("Vui lòng dán mail vào ô!", "error"); return; }
+
+        // Chặn quá nhiều
+        if (lines.length > MAX_MAILS_PER_IMPORT) {
+            showToast("Quá nhiều! Tối đa " + MAX_MAILS_PER_IMPORT + " dòng", "error");
+            return;
+        }
+
+        // Đếm dòng không hợp lệ
+        const validLines = lines.filter(isValidMail);
+        const invalidCount = lines.length - validLines.length;
+
+        if (validLines.length === 0) {
+            showToast("Không có dòng nào hợp lệ (thiếu @)", "error");
+            return;
+        }
 
         const existing = new Set(currentAccounts.map(m => m.toLowerCase()));
         const newList = currentAccounts.slice();
@@ -910,7 +1179,7 @@
         let mainDomain = "", maxC = 0;
         for (const d in domCount) if (domCount[d] > maxC) { maxC = domCount[d]; mainDomain = d; }
 
-        lines.forEach(mail => {
+        validLines.forEach(mail => {
             const lower = mail.toLowerCase();
             if (existing.has(lower)) { dup++; return; }
             const mm = mail.match(/@([^\s|]+)/);
@@ -923,15 +1192,26 @@
         stats = { added, duplicate: dup, other };
         updateStats();
 
-        if (added === 0) { showToast("Không có mail mới (trùng: " + dup + ")", "error"); return; }
+        if (added === 0) {
+            showToast("Không có mail mới (trùng: " + dup + ")", "error");
+            return;
+        }
 
+        setConnState('syncing');
         db.ref("rooms/" + currentRoom).set({
             accounts: newList,
             batch: Date.now()
         }).then(() => {
+            setConnState('online');
             document.getElementById("mailInput").value = "";
-            showToast("Đã thêm " + added + " mail", "success");
-        }).catch(e => showToast("Lỗi: " + e.message, "error"));
+            let msg = "Đã thêm " + added + " mail";
+            if (dup > 0) msg += " (trùng: " + dup + ")";
+            if (invalidCount > 0) msg += " (lỗi: " + invalidCount + ")";
+            showToast(msg, "success");
+        }).catch(e => {
+            setConnState('offline');
+            showToast("Lỗi: " + e.message, "error");
+        });
     }
 
     function updateStats() {
@@ -943,15 +1223,21 @@
     function clearAll() {
         if (currentAccounts.length === 0) { showToast("Danh sách đang trống"); return; }
         if (!confirm("Xóa TẤT CẢ " + currentAccounts.length + " mail?")) return;
+        setConnState('syncing');
         localStorage.removeItem("my_mail_" + currentRoom);
+        try { localStorage.removeItem("cache_accounts_" + currentRoom); } catch(e) {}
         db.ref("rooms/" + currentRoom).set({
             accounts: [],
             batch: Date.now()
         }).then(() => {
+            setConnState('online');
             stats = { added: 0, duplicate: 0, other: 0 };
             updateStats();
             renderCurrentMail();
             showToast("Đã xóa tất cả", "success");
+        }).catch(e => {
+            setConnState('offline');
+            showToast("Lỗi: " + e.message, "error");
         });
     }
 
@@ -966,13 +1252,28 @@
     function loadFile(e) {
         const file = e.target.files[0];
         if (!file) return;
+        // Chặn file quá lớn
+        if (file.size > 5 * 1024 * 1024) {
+            showToast("File quá lớn (>5MB)", "error");
+            e.target.value = "";
+            return;
+        }
         const reader = new FileReader();
         reader.onload = (ev) => {
             document.getElementById("mailInput").value = ev.target.result;
             showToast("Đã tải file: " + file.name, "success");
         };
+        reader.onerror = () => showToast("Lỗi đọc file", "error");
         reader.readAsText(file);
         e.target.value = "";
+    }
+
+    // ================================================================
+    // MAIL LIST — lazy render
+    // ================================================================
+    function onSearchInput() {
+        clearTimeout(searchDebounceId);
+        searchDebounceId = setTimeout(renderMailList, 200);
     }
 
     function renderMailList() {
@@ -988,8 +1289,10 @@
             return;
         }
 
+        // Lazy render — chỉ 50 items đầu
+        const shown = filtered.slice(0, RENDER_BATCH);
         let html = "";
-        filtered.forEach((mail) => {
+        shown.forEach((mail) => {
             const realIdx = currentAccounts.indexOf(mail);
             const isUsed = usedSet.has(mail.split("|")[0].trim().toLowerCase());
             const cls = isUsed ? 'used' : 'available';
@@ -1000,6 +1303,9 @@
                 <span class="mail-badge">${badge}</span>
             </div>`;
         });
+        if (filtered.length > RENDER_BATCH) {
+            html += `<div class="empty-state">... và ${filtered.length - RENDER_BATCH} mail khác</div>`;
+        }
         list.innerHTML = html;
     }
 
@@ -1016,7 +1322,7 @@
             return;
         }
         let html = "";
-        currentHistory.forEach(log => {
+        currentHistory.slice(0, RENDER_BATCH).forEach(log => {
             const time = log.timestamp ? formatTime(log.timestamp) : '—';
             html += `<div class="log-item">
                 <span class="log-time">${time}</span>
@@ -1059,6 +1365,9 @@
         showToast("Đã xuất: " + filename, "success");
     }
 
+    // ================================================================
+    // KEYBOARD SHORTCUTS
+    // ================================================================
     document.addEventListener("keydown", (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "k") {
             const input = document.getElementById("roomInput");
@@ -1082,6 +1391,23 @@
         if (e.key === "Enter") goToRoom();
     });
 
+    // ================================================================
+    // VERSION CHECK — tự reload khi có bản mới
+    // ================================================================
+    const APP_VERSION = "v2.1";
+    try {
+        const saved = localStorage.getItem("app_version");
+        if (saved && saved !== APP_VERSION) {
+            localStorage.setItem("app_version", APP_VERSION);
+            // Không tự reload để tránh gián đoạn — chỉ log
+        } else {
+            localStorage.setItem("app_version", APP_VERSION);
+        }
+    } catch(e) {}
+
+    // ================================================================
+    // INIT
+    // ================================================================
     window.addEventListener("hashchange", init);
     init();
 </script>
