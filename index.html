@@ -377,12 +377,12 @@
         <div class="mail-card">
             <div class="label">
                 <span class="dot"></span>
-                Gmail máy này đang lấy
+                Mail máy này đã nhận
             </div>
             <div class="mail-text loading" id="mailDisplay">
                 <span class="spinner"></span>Đang tải...
             </div>
-            <div class="hint" id="mailHint">Bấm COPY để nhận mail này</div>
+            <div class="hint" id="mailHint">Bấm COPY để nhận mail</div>
         </div>
 
         <button class="copy-btn" id="copyBtn" onclick="copyMail()" disabled>
@@ -477,8 +477,6 @@
             document.getElementById("roomName").innerText = room;
             if (currentRoom !== room) {
                 currentRoom = room;
-                document.getElementById("mailDisplay").className = "mail-text loading";
-                document.getElementById("mailDisplay").innerHTML = '<span class="spinner"></span>Đang tải...';
                 loadRoom(room);
             }
         }
@@ -502,21 +500,38 @@
         });
     }
 
+    // ============================================================
+    // HIỂN THỊ MAIL MÁY NÀY ĐÃ NHẬN (lưu trong localStorage)
+    // ============================================================
     function renderCurrentMail() {
         const el = document.getElementById("mailDisplay");
         const btn = document.getElementById("copyBtn");
         const hint = document.getElementById("mailHint");
 
-        if (currentAccounts.length > 0) {
+        // Đọc mail đã nhận từ localStorage
+        const savedKey = "my_mail_" + currentRoom;
+        const myMail = localStorage.getItem(savedKey);
+
+        if (myMail) {
+            // Đã có mail → hiện mail đó (chỉ email, không pass)
+            const emailOnly = myMail.split("|")[0].trim();
             el.className = "mail-text";
-            el.innerText = currentAccounts[0];
-            btn.disabled = false;
-            hint.innerText = "Chỉ copy phần email, không có mật khẩu.";
+            el.innerText = emailOnly;
+            hint.innerText = "Mail này đã được lưu. Nếu cần mail khác, bấm COPY.";
         } else {
+            // Chưa có mail → hiện gợi ý
             el.className = "mail-text empty";
-            el.innerText = "Chưa có mail nào trong phòng";
+            el.innerText = "Bấm COPY để nhận mail";
+            hint.innerText = "Hệ thống sẽ cấp cho máy này 1 mail riêng biệt.";
+        }
+
+        // Nút COPY: enable nếu còn mail trong danh sách
+        if (currentAccounts.length > 0) {
+            btn.disabled = false;
+            btn.innerText = myMail ? "📋 LẤY MAIL KHÁC" : "📋 COPY MAIL";
+        } else {
             btn.disabled = true;
-            hint.innerText = "Chủ phòng cần thêm mail vào";
+            btn.innerText = "📋 COPY MAIL";
         }
     }
 
@@ -625,20 +640,26 @@
             },
             (error, committed, snapshot) => {
                 // Callback này chạy SAU KHI transaction hoàn tất
-                btn.disabled = false;
-                btn.innerHTML = '📋 COPY MAIL';
                 copying = false;
 
                 if (error) {
+                    btn.disabled = false;
+                    btn.innerText = "📋 COPY MAIL";
                     showToast("Lỗi: " + error.message, "error");
                     return;
                 }
                 if (!committed || !claimedMail) {
+                    btn.disabled = false;
+                    btn.innerText = "📋 COPY MAIL";
                     showToast("Hết mail rồi!", "error");
                     return;
                 }
 
-                // Đã giành được mail → copy (chỉ email, bỏ pass)
+                // Đã giành được mail → lưu vào localStorage để hiển thị
+                const savedKey = "my_mail_" + currentRoom;
+                localStorage.setItem(savedKey, claimedMail);
+
+                // Chỉ copy email, bỏ pass
                 const mailToCopy = claimedMail.split("|")[0].trim();
 
                 const tryCopy = () => {
@@ -654,6 +675,11 @@
                     })
                     .catch(() => {
                         showManualCopyModal(mailToCopy);
+                    })
+                    .finally(() => {
+                        // renderCurrentMail sẽ tự chạy qua Firebase listener
+                        // khi list thay đổi, nhưng gọi thủ công cho chắc
+                        renderCurrentMail();
                     });
             }
         );
