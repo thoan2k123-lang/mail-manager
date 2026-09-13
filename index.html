@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Phân Phối Mail Đám Mây</title>
+    <title>Mail Manager</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; box-sizing: border-box; }
         .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; box-sizing: border-box; }
         h2 { color: #333; text-align: center; margin-top: 0; font-size: 20px; }
         .room-title { background: #e2f0cb; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold; color: #2d6a4f; margin-bottom: 15px; font-size: 14px; }
@@ -14,12 +14,39 @@
         button { width: 100%; background: #0d6efd; color: white; border: none; padding: 12px; font-size: 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 5px; }
         button:active { opacity: 0.8; }
         .admin-section { margin-top: 25px; border-top: 2px dashed #ddd; padding-top: 15px; }
-        textarea { width: 100%; height: 130px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: monospace; font-size: 13px; resize: vertical; }
+        textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: monospace; font-size: 13px; resize: vertical; }
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
         .btn-warning { background: #ffc107; color: #000; }
+        .btn-danger { background: #dc3545; color: #fff; }
         input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 15px; }
         .loading { text-align: center; color: #666; font-style: italic; padding: 20px; }
         .toggle-admin { background: #6c757d; margin-top: 10px; font-size: 13px; padding: 8px; }
+
+        .stats-bar { display: flex; flex-wrap: wrap; gap: 6px; background: #fff9e6; border: 1px solid #ffe69c; border-radius: 5px; padding: 8px 10px; font-size: 12px; font-weight: bold; margin-bottom: 8px; }
+        .stat-item { display: flex; align-items: center; gap: 3px; }
+        .stat-add { color: #198754; }
+        .stat-dup { color: #dc3545; }
+        .stat-sep { color: #ccc; }
+
+        .total-mail { font-size: 15px; font-weight: bold; color: #333; margin-bottom: 8px; text-align: center; }
+
+        .list-header { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; color: #333; margin-bottom: 6px; margin-top: 12px; }
+        .list-count { font-size: 12px; color: #666; font-weight: normal; }
+        .mail-list { max-height: 220px; overflow-y: auto; border: 1px solid #eee; border-radius: 5px; background: #fafafa; }
+        .mail-item { display: flex; align-items: center; padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 12px; }
+        .mail-item:last-child { border-bottom: none; }
+        .mail-item.used { background: #fff0f0; }
+        .mail-item.avail { background: #f0fff4; }
+        .mail-index { color: #888; width: 28px; flex-shrink: 0; }
+        .mail-text { flex: 1; font-family: monospace; word-break: break-all; margin-right: 6px; }
+        .mail-status { font-size: 10px; padding: 2px 5px; border-radius: 3px; margin-right: 6px; flex-shrink: 0; }
+        .mail-item.used .mail-status { background: #ffd6d6; color: #b00; }
+        .mail-item.avail .mail-status { background: #d4edda; color: #155724; }
+        .btn-delete { width: 26px; height: 26px; padding: 0; background: #dc3545; font-size: 13px; flex-shrink: 0; margin: 0; border-radius: 4px; line-height: 1; }
+        .add-mail-row { display: flex; gap: 6px; margin-top: 8px; }
+        .add-mail-row input { flex: 1; margin: 0; font-size: 13px; padding: 8px; }
+        .add-mail-row button { width: auto; padding: 8px 14px; margin: 0; font-size: 13px; background: #198754; }
+        .empty-msg { text-align: center; color: #999; font-size: 12px; padding: 12px; }
     </style>
 </head>
 <body>
@@ -28,7 +55,7 @@
     <!-- MÀN HÌNH CHỌN PHÒNG -->
     <div id="homeView" style="display:none;">
         <h2>Quản Lý & Phân Phối Mail</h2>
-        <p style="font-size: 13px; color: #666; text-align: center;">Nhập tên phòng của bạn (VD: Thoan2000, Nam123) để tạo hoặc truy cập:</p>
+        <p style="font-size: 13px; color: #666; text-align: center;">Nhập tên phòng của bạn để tạo hoặc truy cập:</p>
         <input type="text" id="roomInput" placeholder="Nhập tên phòng...">
         <button onclick="goToRoom()">Vào Phòng</button>
     </div>
@@ -39,7 +66,6 @@
         
         <div id="loadingBox" class="loading">Đang tải dữ liệu phòng...</div>
 
-        <!-- Phần cho thiết bị nhận mail -->
         <div id="userPart" style="display:none;">
             <h3 style="font-size: 16px; text-align: center; color: #333; margin-top:0;">Tài Khoản Của Thiết Bị Này</h3>
             <div class="box">
@@ -48,30 +74,50 @@
             <button onclick="copyAccount()">📋 SAO CHÉP TÀI KHOẢN</button>
         </div>
 
-        <!-- Nút ẩn/hiện khu vực admin -->
         <button class="toggle-admin" onclick="toggleAdmin()" id="toggleAdminBtn">⚙️ Hiện khu vực Chủ Phòng</button>
 
-        <!-- Phần quản trị dán mail -->
         <div class="admin-section" id="adminPart" style="display:none;">
-            <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #333;">Khu vực Chủ Phòng (Dán danh sách mail):</div>
-            <textarea id="adminInput" placeholder="email1@domain.com|pass1&#10;email2@domain.com|pass2"></textarea>
-            <div class="btn-group">
-                <button onclick="saveRoomList()" style="flex: 2;">💾 Lưu Danh Sách</button>
-                <button class="btn-warning" onclick="resetCounter()" style="flex: 1;">🔄 Reset Lượt</button>
+
+            <div class="total-mail" id="totalMail">Số mail: 0</div>
+
+            <div class="stats-bar">
+                <div class="stat-item stat-add">✅ Thêm: <span id="statAdd">0</span></div>
+                <span class="stat-sep">|</span>
+                <div class="stat-item stat-dup">❌ Trùng: <span id="statDup">0</span></div>
             </div>
-            <button onclick="goHome()" style="background: #6c757d; margin-top: 10px;">🏠 Đổi Phòng</button>
+
+            <textarea id="adminInput" placeholder="Dán danh sách mail vào đây (mỗi dòng 1 mail):&#10;email1@domain.com|pass1&#10;email2@domain.com|pass2"></textarea>
+
+            <div class="btn-group">
+                <button onclick="importMails()" style="flex: 1; background:#198754;">➕ Add</button>
+                <button class="btn-danger" onclick="deleteAllMails()" style="flex: 1;">🗑️ Xóa tất cả</button>
+            </div>
+
+            <div class="list-header">
+                <span>Danh sách mail hiện có:</span>
+                <span class="list-count" id="listCount">0 mail</span>
+            </div>
+            <div class="mail-list" id="mailList">
+                <div class="empty-msg">Chưa có mail nào</div>
+            </div>
+
+            <div class="add-mail-row">
+                <input type="text" id="newMailInput" placeholder="Thêm mail lẻ: email|pass...">
+                <button onclick="addSingleMail()">+ Thêm</button>
+            </div>
+
+            <div class="btn-group" style="margin-top: 10px;">
+                <button class="btn-warning" onclick="resetCounter()" style="flex: 1;">🔄 Reset Lượt</button>
+                <button onclick="goHome()" style="flex: 1; background: #6c757d;">🏠 Đổi Phòng</button>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- ===== FIREBASE SDK (compat v9) ===== -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <script>
-    // ============================================================
-    // CẤU HÌNH FIREBASE CỦA BẠN
-    // ============================================================
     const firebaseConfig = {
         apiKey: "AIzaSyAFTBub56US4pY2NhZIB9s3XGPktd4VKko",
         authDomain: "mail-manager-620f4.firebaseapp.com",
@@ -82,14 +128,17 @@
         appId: "1:1093473633575:web:556ed50c43e5fda06ad502"
     };
 
-    // Khởi tạo Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // ============================================================
-    // CÁC HÀM XỬ LÝ CHÍNH
-    // ============================================================
+    let currentRoom = "";
+    let currentAccounts = [];
+    let currentCounter = 0;
+    let lastStats = { added: 0, duplicate: 0 };
 
+    // ============================================================
+    // ĐIỀU HƯỚNG
+    // ============================================================
     function getRoomName() {
         return window.location.hash.replace("#", "").trim();
     }
@@ -135,37 +184,41 @@
     }
 
     // ============================================================
-    // ĐỌC DỮ LIỆU TỪ FIREBASE (realtime)
+    // ĐỌC DỮ LIỆU
     // ============================================================
-
     function loadData(room) {
+        currentRoom = room;
         document.getElementById("loadingBox").style.display = "block";
         document.getElementById("userPart").style.display = "none";
 
-        // Lắng nghe dữ liệu phòng theo thời gian thực
         db.ref("rooms/" + room).on("value", (snapshot) => {
             const data = snapshot.val() || { accounts: [], counter: 0 };
+            currentAccounts = data.accounts || [];
+            currentCounter = data.counter || 0;
+
             document.getElementById("loadingBox").style.display = "none";
             document.getElementById("userPart").style.display = "block";
+
             processData(room, data);
         });
     }
 
     function processData(room, data) {
         let accounts = data.accounts || [];
-        document.getElementById("adminInput").value = accounts.join("\n");
+        let counter = data.counter || 0;
 
-        // Slot của thiết bị này vẫn lưu local
+        renderMailList(accounts, counter);
+        updateStats(lastStats);
+        updateTotalMail(accounts.length);
+
         let assignedKey = "assigned_slot_v2_" + room;
         let assignedIndex = localStorage.getItem(assignedKey);
 
         if (assignedIndex === null) {
-            if (accounts.length > 0 && data.counter < accounts.length) {
-                assignedIndex = data.counter;
+            if (accounts.length > 0 && counter < accounts.length) {
+                assignedIndex = counter;
                 localStorage.setItem(assignedKey, assignedIndex);
-                data.counter++;
-                // Cập nhật counter lên Firebase
-                db.ref("rooms/" + room + "/counter").set(data.counter);
+                db.ref("rooms/" + room + "/counter").set(counter + 1);
             } else {
                 document.getElementById("accountDisplay").innerText = "Chưa có tài khoản nào trong phòng này!";
                 return;
@@ -179,60 +232,180 @@
         }
     }
 
-    // ============================================================
-    // GHI DỮ LIỆU LÊN FIREBASE
-    // ============================================================
-
-    function saveRoomList() {
-        let room = getRoomName();
-        let rawText = document.getElementById("adminInput").value;
-        let lines = rawText.split("\n").map(item => item.trim()).filter(item => item.length > 0);
-
-        let newData = {
-            accounts: lines,
-            counter: 0
-        };
-
-        // Xóa slot cũ trên máy này để nhận lại từ đầu
-        localStorage.removeItem("assigned_slot_v2_" + room);
-
-        // Ghi lên Firebase
-        db.ref("rooms/" + room).set(newData)
-            .then(() => {
-                alert("Đã lưu danh sách thành công!");
-            })
-            .catch((error) => {
-                alert("Lỗi khi lưu: " + error.message);
-            });
+    function updateStats(stats) {
+        document.getElementById("statAdd").innerText = stats.added || 0;
+        document.getElementById("statDup").innerText = stats.duplicate || 0;
     }
 
-    function resetCounter() {
-        let room = getRoomName();
-        if (confirm("Bạn có muốn reset lượt cấp phát để nhận lại từ đầu không?")) {
-            let rawText = document.getElementById("adminInput").value;
-            let lines = rawText.split("\n").map(item => item.trim()).filter(item => item.length > 0);
+    function updateTotalMail(count) {
+        document.getElementById("totalMail").innerText = "Số mail: " + count;
+    }
 
-            let newData = {
-                accounts: lines,
-                counter: 0
-            };
+    // ============================================================
+    // IMPORT DANH SÁCH TỪ TEXTAREA (chỉ lọc trùng)
+    // ============================================================
+    function importMails() {
+        const rawText = document.getElementById("adminInput").value;
+        const lines = rawText.split("\n").map(s => s.trim()).filter(s => s.length > 0);
 
-            localStorage.removeItem("assigned_slot_v2_" + room);
-
-            db.ref("rooms/" + room).set(newData)
-                .then(() => {
-                    alert("Đã reset thành công!");
-                })
-                .catch((error) => {
-                    alert("Lỗi khi reset: " + error.message);
-                });
+        if (lines.length === 0) {
+            alert("Vui lòng dán danh sách mail vào ô!");
+            return;
         }
+
+        const existingSet = new Set(currentAccounts.map(m => m.toLowerCase()));
+        let added = 0, duplicate = 0;
+        const newList = currentAccounts.slice();
+
+        lines.forEach(mail => {
+            const mailLower = mail.toLowerCase();
+            if (existingSet.has(mailLower)) {
+                duplicate++;
+                return;
+            }
+            newList.push(mail);
+            existingSet.add(mailLower);
+            added++;
+        });
+
+        lastStats = { added, duplicate };
+        updateStats(lastStats);
+
+        if (added === 0) {
+            alert("Không có mail mới nào được thêm!\nTrùng: " + duplicate);
+            return;
+        }
+
+        db.ref("rooms/" + currentRoom).set({
+            accounts: newList,
+            counter: currentCounter
+        }).then(() => {
+            document.getElementById("adminInput").value = "";
+            alert("✅ Đã thêm " + added + " mail!\n❌ Trùng: " + duplicate);
+        }).catch((err) => {
+            alert("Lỗi khi thêm: " + err.message);
+        });
+    }
+
+    // ============================================================
+    // HIỂN THỊ DANH SÁCH MAIL
+    // ============================================================
+    function renderMailList(accounts, counter) {
+        const list = document.getElementById("mailList");
+        const countEl = document.getElementById("listCount");
+
+        countEl.innerText = accounts.length + " mail (đã cấp " + counter + ")";
+
+        if (accounts.length === 0) {
+            list.innerHTML = '<div class="empty-msg">Chưa có mail nào</div>';
+            return;
+        }
+
+        let html = "";
+        accounts.forEach((mail, idx) => {
+            const isUsed = idx < counter;
+            const cls = isUsed ? "used" : "avail";
+            const statusText = isUsed ? "Đã cấp" : "Trống";
+            html += `
+                <div class="mail-item ${cls}">
+                    <div class="mail-index">#${idx + 1}</div>
+                    <div class="mail-text">${escapeHtml(mail)}</div>
+                    <div class="mail-status">${statusText}</div>
+                    <button class="btn-delete" onclick="deleteMail(${idx})" title="Xóa mail này">✖</button>
+                </div>
+            `;
+        });
+        list.innerHTML = html;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ============================================================
+    // XÓA 1 MAIL
+    // ============================================================
+    function deleteMail(index) {
+        if (!confirm("Bạn có chắc muốn xóa mail #" + (index + 1) + " không?")) return;
+
+        let newAccounts = currentAccounts.slice();
+        newAccounts.splice(index, 1);
+
+        let newCounter = currentCounter;
+        if (index < currentCounter) newCounter--;
+        if (newCounter > newAccounts.length) newCounter = newAccounts.length;
+
+        db.ref("rooms/" + currentRoom).set({
+            accounts: newAccounts,
+            counter: newCounter
+        }).catch((err) => alert("Lỗi khi xóa: " + err.message));
+    }
+
+    // ============================================================
+    // XÓA TẤT CẢ MAIL
+    // ============================================================
+    function deleteAllMails() {
+        if (currentAccounts.length === 0) {
+            alert("Danh sách đang trống, không có gì để xóa!");
+            return;
+        }
+        if (!confirm("⚠️ Bạn có chắc muốn XÓA TẤT CẢ " + currentAccounts.length + " mail trong phòng này không?\n\nHành động này không thể hoàn tác!")) return;
+
+        db.ref("rooms/" + currentRoom).set({ accounts: [], counter: 0 })
+            .then(() => {
+                localStorage.removeItem("assigned_slot_v2_" + currentRoom);
+                lastStats = { added: 0, duplicate: 0 };
+                updateStats(lastStats);
+                alert("Đã xóa tất cả mail thành công!");
+            })
+            .catch((err) => alert("Lỗi khi xóa: " + err.message));
+    }
+
+    // ============================================================
+    // THÊM 1 MAIL LẺ
+    // ============================================================
+    function addSingleMail() {
+        let input = document.getElementById("newMailInput");
+        let newMail = input.value.trim();
+        if (!newMail) {
+            alert("Vui lòng nhập mail!");
+            return;
+        }
+
+        const mailLower = newMail.toLowerCase();
+        if (currentAccounts.map(m => m.toLowerCase()).includes(mailLower)) {
+            alert("Mail này đã tồn tại trong danh sách!");
+            return;
+        }
+
+        let newAccounts = currentAccounts.slice();
+        newAccounts.push(newMail);
+
+        db.ref("rooms/" + currentRoom + "/accounts").set(newAccounts)
+            .then(() => {
+                input.value = "";
+                lastStats = { added: 1, duplicate: 0 };
+                updateStats(lastStats);
+            })
+            .catch((err) => alert("Lỗi khi thêm: " + err.message));
+    }
+
+    // ============================================================
+    // RESET LƯỢT
+    // ============================================================
+    function resetCounter() {
+        if (!confirm("Bạn có muốn reset lượt cấp phát để nhận lại từ đầu không?")) return;
+        localStorage.removeItem("assigned_slot_v2_" + currentRoom);
+        db.ref("rooms/" + currentRoom + "/counter").set(0)
+            .then(() => alert("Đã reset thành công!"))
+            .catch((err) => alert("Lỗi khi reset: " + err.message));
     }
 
     // ============================================================
     // SAO CHÉP TÀI KHOẢN
     // ============================================================
-
     function copyAccount() {
         let text = document.getElementById("accountDisplay").innerText;
         if (text.includes("@")) {
@@ -247,7 +420,6 @@
     // ============================================================
     // KHỞI CHẠY
     // ============================================================
-
     window.addEventListener("hashchange", initApp);
     initApp();
 </script>
