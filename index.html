@@ -36,7 +36,7 @@
     <div id="roomView" style="display:none;">
         <div class="room-title" id="roomTitleDisplay">Phòng: ...</div>
         
-        <div id="loadingBox" class="loading">Đang kết nối dữ liệu đám mây...</div>
+        <div id="loadingBox" class="loading">Đang tải dữ liệu phòng...</div>
 
         <!-- Phần cho thiết bị nhận mail -->
         <div id="userPart" style="display:none;">
@@ -52,7 +52,7 @@
             <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #333;">Khu vực Chủ Phòng (Dán danh sách mail):</div>
             <textarea id="adminInput" placeholder="email1@domain.com|pass1&#10;email2@domain.com|pass2"></textarea>
             <div class="btn-group">
-                <button onclick="saveRoomList()" style="flex: 2;">💾 Lưu Lên Đám Mây</button>
+                <button onclick="saveRoomList()" style="flex: 2;">💾 Lưu Danh Sách</button>
                 <button class="btn-warning" onclick="resetCounter()" style="flex: 1;">🔄 Reset Lượt</button>
             </div>
             <button onclick="goHome()" style="background: #6c757d; margin-top: 10px;">🏠 Đổi Phòng</button>
@@ -74,7 +74,7 @@
             document.getElementById("homeView").style.display = "none";
             document.getElementById("roomView").style.display = "block";
             document.getElementById("roomTitleDisplay").innerText = "Phòng: " + room;
-            fetchRoomData(room);
+            loadData(room);
         }
     }
 
@@ -93,43 +93,42 @@
         initApp();
     }
 
-    async function fetchRoomData(room) {
+    function getStorageKey(room) {
+        return "mail_room_data_v2_" + room;
+    }
+
+    function loadData(room) {
         document.getElementById("loadingBox").style.display = "block";
         document.getElementById("userPart").style.display = "none";
         document.getElementById("adminPart").style.display = "none";
 
-        try {
-            let response = await fetch("https://api.npoint.io/room_" + room);
-            let data = response.ok ? await response.json() : { accounts: [], counter: 0 };
-            
+        setTimeout(() => {
+            let rawData = localStorage.getItem(getStorageKey(room));
+            let data = rawData ? JSON.parse(rawData) : { accounts: [], counter: 0 };
+
             document.getElementById("loadingBox").style.display = "none";
             document.getElementById("userPart").style.display = "block";
             document.getElementById("adminPart").style.display = "block";
 
-            processRoomData(room, data);
-        } catch (e) {
-            document.getElementById("loadingBox").style.display = "none";
-            document.getElementById("userPart").style.display = "block";
-            document.getElementById("adminPart").style.display = "block";
-            processRoomData(room, { accounts: [], counter: 0 });
-        }
+            processData(room, data);
+        }, 200);
     }
 
-    function processRoomData(room, data) {
+    function processData(room, data) {
         let accounts = data.accounts || [];
         document.getElementById("adminInput").value = accounts.join("\n");
 
-        let assignedIndexKey = "assigned_idx_" + room;
-        let assignedIndex = localStorage.getItem(assignedIndexKey);
+        let assignedKey = "assigned_slot_v2_" + room;
+        let assignedIndex = localStorage.getItem(assignedKey);
 
         if (assignedIndex === null) {
-            if (data.counter < accounts.length) {
+            if (accounts.length > 0 && data.counter < accounts.length) {
                 assignedIndex = data.counter;
-                localStorage.setItem(assignedIndexKey, assignedIndex);
+                localStorage.setItem(assignedKey, assignedIndex);
                 data.counter++;
-                updateCloudData(room, data, false);
+                localStorage.setItem(getStorageKey(room), JSON.stringify(data));
             } else {
-                document.getElementById("accountDisplay").innerText = "Phòng này đã hết tài khoản cấp phát!";
+                document.getElementById("accountDisplay").innerText = "Chưa có tài khoản nào trong phòng này!";
                 return;
             }
         }
@@ -137,11 +136,11 @@
         if (accounts[assignedIndex]) {
             document.getElementById("accountDisplay").innerText = accounts[assignedIndex];
         } else {
-            document.getElementById("accountDisplay").innerText = "Tài khoản cho thiết bị này đã bị xóa khỏi hệ thống.";
+            document.getElementById("accountDisplay").innerText = "Chưa có tài khoản hoặc danh sách đã bị thay đổi.";
         }
     }
 
-    async function saveRoomList() {
+    function saveRoomList() {
         let room = getRoomName();
         let rawText = document.getElementById("adminInput").value;
         let lines = rawText.split("\n").map(item => item.trim()).filter(item => item.length > 0);
@@ -151,13 +150,15 @@
             counter: 0
         };
 
-        localStorage.removeItem("assigned_idx_" + room);
-        await updateCloudData(room, newData, true);
+        localStorage.removeItem("assigned_slot_v2_" + room);
+        localStorage.setItem(getStorageKey(room), JSON.stringify(newData));
+        alert("Đã lưu danh sách thành công!");
+        location.reload();
     }
 
-    async function resetCounter() {
+    function resetCounter() {
         let room = getRoomName();
-        if(confirm("Bạn có muốn reset lượt cấp phát để các máy nhận lại từ đầu không?")) {
+        if(confirm("Bạn có muốn reset lượt cấp phát để nhận lại từ đầu không?")) {
             let rawText = document.getElementById("adminInput").value;
             let lines = rawText.split("\n").map(item => item.trim()).filter(item => item.length > 0);
             
@@ -165,24 +166,10 @@
                 accounts: lines,
                 counter: 0
             };
-            localStorage.removeItem("assigned_idx_" + room);
-            await updateCloudData(room, newData, true);
-        }
-    }
-
-    async function updateCloudData(room, data, showAlert) {
-        try {
-            await fetch("https://api.npoint.io/room_" + room, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-            if(showAlert) {
-                alert("Đã lưu thành công lên hệ thống đám mây!");
-                location.reload();
-            }
-        } catch(e) {
-            alert("Lỗi kết nối đám mây, vui lòng thử lại!");
+            localStorage.removeItem("assigned_slot_v2_" + room);
+            localStorage.setItem(getStorageKey(room), JSON.stringify(newData));
+            alert("Đã reset thành công!");
+            location.reload();
         }
     }
 
@@ -193,7 +180,7 @@
                 alert("Đã sao chép: " + text);
             });
         } else {
-            alert("Không có tài khoản hợp lệ!");
+            alert("Không có tài khoản hợp lệ để sao chép!");
         }
     }
 
