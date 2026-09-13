@@ -17,7 +17,6 @@
     }
     .container { width: 100%; max-width: 480px; }
 
-    /* HEADER */
     .app-header {
         background: white;
         border-radius: 14px;
@@ -40,7 +39,6 @@
     .app-header .title { font-size: 13px; color: #888; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
     .app-header .room-name { font-size: 20px; color: #1a1a2e; font-weight: 800; margin-top: 2px; }
 
-    /* MAIL CARD */
     .mail-card {
         background: white;
         border-radius: 14px;
@@ -114,7 +112,6 @@
         margin-top: 10px;
     }
 
-    /* COPY BUTTON */
     .copy-btn {
         width: 100%;
         background: linear-gradient(135deg, #667eea, #764ba2);
@@ -138,7 +135,6 @@
     .copy-btn:active:not(:disabled) { transform: translateY(0); }
     .copy-btn:disabled { background: #d1d5db; box-shadow: none; cursor: not-allowed; color: #6b7280; }
 
-    /* STATS */
     .stats-row {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -159,7 +155,6 @@
     .stat-box.dup .num { color: #ef4444; }
     .stat-box.other .num { color: #f59e0b; }
 
-    /* ADMIN */
     .toggle-admin {
         width: 100%;
         background: rgba(255,255,255,0.85);
@@ -222,7 +217,6 @@
     .btn-file { background: #3b82f6; }
     .btn-file:hover { background: #2563eb; }
 
-    /* HOME */
     .home-card {
         background: white;
         border-radius: 14px;
@@ -272,7 +266,6 @@
 
     .hidden { display: none !important; }
 
-    /* TOAST */
     .toast {
         position: fixed;
         top: 24px; left: 50%;
@@ -296,7 +289,6 @@
     .toast.success { background: #10b981; }
     .toast.error { background: #ef4444; }
 
-    /* SPINNER */
     .spinner {
         display: inline-block;
         width: 16px; height: 16px;
@@ -309,7 +301,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* MODAL */
     .modal-overlay {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
@@ -365,7 +356,6 @@
 
 <div class="container">
 
-    <!-- HOME VIEW -->
     <div id="homeView" class="home-card hidden">
         <div class="logo-big">📬</div>
         <h1>Mail Manager</h1>
@@ -374,7 +364,6 @@
         <button class="enter-btn" onclick="goToRoom()">VÀO PHÒNG →</button>
     </div>
 
-    <!-- MAIN VIEW -->
     <div id="mainView" class="hidden">
 
         <div class="app-header">
@@ -612,77 +601,66 @@
     }
 
     // ============================================================
-    // COPY MAIL - Copy chỉ email (bỏ pass), dùng transaction
+    // COPY MAIL - TRANSACTION ĐỂ CHỐNG TRÙNG 100% KHI 20 MÁY CÙNG BẤM
     // ============================================================
     function copyMail() {
         if (copying) return;
-        if (currentAccounts.length === 0) {
-            showToast("Hết mail rồi!", "error");
-            return;
-        }
-
-        // mail đầy đủ (để xóa khỏi Firebase) và mail rút gọn (để copy)
-        const mail = currentAccounts[0];
-        const mailToCopy = mail.split("|")[0].trim();
 
         copying = true;
         const btn = document.getElementById("copyBtn");
         btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:white;"></span> ĐANG LẤY MAIL...';
 
-        // Copy NGAY trong cùng user gesture để Safari/iOS cho phép
-        const doCopy = () => {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                return navigator.clipboard.writeText(mailToCopy);
+        // Biến lưu mail giành được - khai báo BÊN NGOÀI callback
+        // để không bị reset khi Firebase retry transaction
+        let claimedMail = null;
+
+        db.ref("rooms/" + currentRoom + "/accounts").transaction(
+            (list) => {
+                // Callback này chạy lại mỗi khi có xung đột giữa các máy
+                // Firebase tự động retry với dữ liệu mới nhất
+                if (!list || list.length === 0) return; // abort → hết mail
+                claimedMail = list[0];
+                return list.slice(1); // xóa mail đầu
+            },
+            (error, committed, snapshot) => {
+                // Callback này chạy SAU KHI transaction hoàn tất
+                btn.disabled = false;
+                btn.innerHTML = '📋 COPY MAIL';
+                copying = false;
+
+                if (error) {
+                    showToast("Lỗi: " + error.message, "error");
+                    return;
+                }
+                if (!committed || !claimedMail) {
+                    showToast("Hết mail rồi!", "error");
+                    return;
+                }
+
+                // Đã giành được mail → copy (chỉ email, bỏ pass)
+                const mailToCopy = claimedMail.split("|")[0].trim();
+
+                const tryCopy = () => {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        return navigator.clipboard.writeText(mailToCopy);
+                    }
+                    return Promise.reject(new Error("no clipboard"));
+                };
+
+                tryCopy()
+                    .then(() => {
+                        showToast("✅ Đã copy: " + mailToCopy, "success");
+                    })
+                    .catch(() => {
+                        showManualCopyModal(mailToCopy);
+                    });
             }
-            return new Promise((resolve, reject) => {
-                const ta = document.createElement("textarea");
-                ta.value = mailToCopy;
-                ta.setAttribute("readonly", "");
-                ta.style.position = "fixed";
-                ta.style.top = "-9999px";
-                ta.style.opacity = "0";
-                document.body.appendChild(ta);
-                ta.select();
-                ta.setSelectionRange(0, 99999);
-                try {
-                    document.execCommand("copy");
-                    resolve();
-                } catch (err) {
-                    reject(err);
-                }
-                document.body.removeChild(ta);
-            });
-        };
-
-        doCopy()
-            .then(() => {
-                showToast("✅ Đã copy: " + mailToCopy, "success");
-                // Xóa mail đầy đủ khỏi Firebase (dùng transaction để chống trùng)
-                return db.ref("rooms/" + currentRoom + "/accounts").transaction((list) => {
-                    if (!list || list.length === 0) return list;
-                    const idx = list.indexOf(mail);
-                    if (idx === -1) return list; // mail đã bị máy khác lấy trước
-                    list.splice(idx, 1);
-                    return list;
-                });
-            })
-            .then(() => {
-                copying = false;
-                btn.disabled = false;
-            })
-            .catch((err) => {
-                copying = false;
-                btn.disabled = false;
-                if (err && err.name === "NotAllowedError") {
-                    showManualCopyModal(mailToCopy);
-                } else {
-                    showToast("Lỗi: " + err.message, "error");
-                }
-            });
+        );
     }
 
     // ============================================================
-    // MODAL COPY THỦ CÔNG (fallback cho iOS bị chặn)
+    // MODAL COPY THỦ CÔNG (fallback cho iOS)
     // ============================================================
     function showManualCopyModal(mail) {
         const overlay = document.createElement("div");
@@ -702,7 +680,6 @@
         const copyBtn = overlay.querySelector("#modalCopyBtn");
         const closeBtn = overlay.querySelector("#modalCloseBtn");
 
-        // Focus + select sẵn để Ctrl+C / Cmd+C là copy được ngay
         setTimeout(() => { input.focus(); input.select(); }, 100);
 
         copyBtn.onclick = () => {
